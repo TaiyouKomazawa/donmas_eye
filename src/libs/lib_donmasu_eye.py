@@ -305,7 +305,9 @@ class EyesControlServer:
                     self.set_interval_()
                 
                 print('Data received!\n  data: {0}\n'.format(dict))
-
+            else:
+                break
+            
             if self._is_alive_ == False:
                 break
 
