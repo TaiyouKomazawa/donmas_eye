@@ -18,7 +18,12 @@ from libs.lib_donmasu_eye import Eye, EyeLid, EyesControlServer
 #使用するネットワーク上のポート番号
 PORT = 35000
 
-#アスペクト比 16:9 (表示したいディスプレイの比率に合わせて設定する) 
+#表示する画像の大きさ。現在の設定値はアスペクト比 16:9の画面に合わせている。
+SCREEN_HEIGHT   = 720
+SCREEN_WIDTH    = 2*1290
+
+
+#処理に用いる画像の大きさ。瞳の画質に合わせて設定する。
 HEIGHT = 270
 #左右の眼の画像は1つの連結された画像であるので横幅のみ2倍で定義
 HALF_WIDTH = 480
@@ -72,7 +77,7 @@ def main():
         #瞬きを描画
         eyes = eyelid.spin_once(eyes)
         #ウィンドウの画像を更新
-        cv2.imshow("eyes_test", eyes)
+        cv2.imshow("eyes_test", cv2.resize(eyes, dsize=[SCREEN_WIDTH, SCREEN_HEIGHT]))
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             eyelid_img.release()
