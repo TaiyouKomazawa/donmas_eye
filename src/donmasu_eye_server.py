@@ -77,7 +77,7 @@ def main():
         #瞬きを描画
         eyes = eyelid.spin_once(eyes)
         #ウィンドウの画像を更新
-        cv2.imshow("eyes_test", cv2.resize(eyes, dsize=[SCREEN_WIDTH, SCREEN_HEIGHT]))
+        cv2.imshow("eyes_test", cv2.resize(eyes, dsize=(SCREEN_WIDTH, SCREEN_HEIGHT)))
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             eyelid_img.release()
