@@ -1,6 +1,8 @@
 '''
 シナリオサーバーからEyesControlClientへ変換するスクリプト
 
+シナリオサーバーからTCPで送られてくる文字列形式のコマンドを解析してドンマス-アイサーバーを制御します。
+
 author  : Taiyou Komazawa
 date    : 2022/4/27
 '''
