@@ -22,11 +22,22 @@ SCENARIO_SERVER_IP = '127.0.0.1'
 #接続先(EyesControlServer)のIPアドレス
 CTRL_SERVER_IP = '127.0.0.1'
 
-
+#シナリオサーバのポート番号
 SCENARIO_SERVER_PORT = 35001
-#使用するネットワーク上のポート番号(donmasu_eye_server.pyで指定したポート番号と同じものを指定する。)
+#接続先のポート番号(donmasu_eye_server.pyで指定したポート番号と同じものを指定する。)
 CTRL_SERVER_PORT = 35000
 
+# シナリオサーバーとEyeCntrolServerの間をつなぐクラス
+'''
+コマンドの例
+
+瞳を(16,255)の位置に10秒をかけて動かす場合
+EYDMRPC0X16Y255T100
+瞬きの周期を3.5秒にする場合
+EYDMRPC1T35
+瞳のモードを通常(右:0, 左:0)から笑顔(右:1, 左:1)変更する
+EYDMRPC2M11
+'''
 class Scenario2Server:
     def __init__(self, ctrl_server_addr, scenario_addr=['127.0.0.1', 22], timeout=10):
 

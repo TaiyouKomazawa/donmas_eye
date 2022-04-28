@@ -52,6 +52,18 @@ class Eye:
         self.change_mode(0)
 
     def change_mode(self, mode):
+        '''
+        瞳のタイプを変更する関数
+
+        Parameters
+        ----------
+        mode    : int
+            瞳の画像の種類(0から読み込んだ画像順で指定可能)
+
+        Returns
+        -------
+        None
+        '''
         if mode < len(self.pupils_):
             pupil = self.pupils_[mode]
 
