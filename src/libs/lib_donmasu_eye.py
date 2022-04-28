@@ -20,7 +20,7 @@ import threading
 #眼(瞳)のアニメーションを定義するクラス
 class Eye:
 
-    def __init__(self, bg, pupil, min_range=[0,0], max_range=[0,0]):
+    def __init__(self, bg, pupils, min_range=[0,0], max_range=[0,0]):
         '''
         クラスコンストラクタ
 
@@ -29,8 +29,8 @@ class Eye:
         bg          : ndarray
             使用する背景(白目)画像
 
-        pupil       : ndarray
-            瞳の画像
+        pupils       : [ndarray, ...]
+            瞳の画像のリスト(モード順のリスト)
 
         min_range   : [float, float]
             原点(y,x)=(0.0, 0.0)のオフセット画素値[pixel]
@@ -39,22 +39,31 @@ class Eye:
             最大値(y,x)=(1.0, 1.0)のオフセット画素値[pixel]
         '''
         self.bg_ = bg
-        self.pupil_ = pupil
 
+        self.pupils_ = pupils
 
         self.bg_r_ = self.bg_.shape[:2]
-        self.pupil_r_ = pupil.shape[:2]
 
         self.min_r_ = min_range
-        self.min_mr_ = [self.min_r_[0], self.min_r_[1]]
-        self.min_mr_[0] += self.pupil_r_[0] / 2
-        self.min_mr_[1] += self.pupil_r_[1] / 2
         self.max_r_ = max_range
-        self.max_mr_ = [self.max_r_[0], self.max_r_[1]]
-        self.max_mr_[0] -= self.pupil_r_[0] / 2
-        self.max_mr_[1] -= self.pupil_r_[1] / 2
 
-        self.p_org_px = (0, 0)
+        self.p_org_px = (0.5, 0.5)
+
+        self.change_mode(0)
+
+    def change_mode(self, mode):
+        if mode < len(self.pupils_):
+            pupil = self.pupils_[mode]
+
+            self.pupil_r_ = pupil.shape[:2]
+            self.min_mr_ = [self.min_r_[0], self.min_r_[1]]
+            self.min_mr_[0] += self.pupil_r_[0] / 2
+            self.min_mr_[1] += self.pupil_r_[1] / 2
+            self.max_mr_ = [self.max_r_[0], self.max_r_[1]]
+            self.max_mr_[0] -= self.pupil_r_[0] / 2
+            self.max_mr_[1] -= self.pupil_r_[1] / 2
+            self.pupil_ = pupil
+            self.set_pos(0.5, 0.5)
 
     def set_pos(self, y, x):
         '''
@@ -211,13 +220,16 @@ class EyesControlServer:
         self.y_pos_key_         = 'ypos'
         self.blink_period_key_  = 'period'
         self.blink_num_key_     = 'bnum'
-        
+        self.right_mode_key_    = 'rmode'
+        self.left_mode_key_     = 'lmode'        
 
         self.packets = {
             self.x_pos_key_ : 0.5,
             self.y_pos_key_ : 0.5,
             self.blink_period_key_ : 2.0,
-            self.blink_num_key_ : 2
+            self.blink_num_key_ : 2,
+            self.right_mode_key_: 0,
+            self.left_mode_key_: 0
         }
 
         self.set_pos_()
@@ -260,6 +272,12 @@ class EyesControlServer:
         interval = self.packets[self.blink_period_key_]
         num = self.packets[self.blink_num_key_]
         self.obj_eyelid_.set_interval(interval, num)
+
+    def set_mode_(self):
+        rmode = self.packets[self.right_mode_key_]
+        lmode = self.packets[self.left_mode_key_]
+        self.obj_right_.change_mode(rmode)
+        self.obj_left_.change_mode(lmode)
 
     def init_socket_(self, ip, port, timeout=10):
         self.server_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -304,6 +322,11 @@ class EyesControlServer:
                     self.packets[self.blink_num_key_] = dict[self.blink_num_key_]
                     self.set_interval_()
                 
+                if self.right_mode_key_ in dict and self.left_mode_key_ in dict:
+                    self.packets[self.right_mode_key_] = dict[self.right_mode_key_]
+                    self.packets[self.left_mode_key_] = dict[self.left_mode_key_]
+                    self.set_mode_()
+
                 print('Data received!\n  data: {0}\n'.format(dict))
             else:
                 break
@@ -337,6 +360,8 @@ class EyesControlClient:
         self.y_pos_key_         = 'ypos'
         self.blink_period_key_  = 'period'
         self.blink_num_key_     = 'bnum'
+        self.right_mode_key_    = 'rmode'
+        self.left_mode_key_     = 'lmode'
 
     def __del__(self):
         '''
@@ -388,6 +413,30 @@ class EyesControlClient:
         packets = {
             self.blink_period_key_  : period,
             self.blink_num_key_     : loop_num
+        }
+
+        return self.send_(packets)
+
+    def set_mode(self, right, left):
+        '''
+        瞳のモードをサーバーに送信する関数
+
+        Parameters
+        ----------
+        right   : int
+            右の瞳のモード  
+
+        left    : int
+            左の瞳のモード
+        
+        Returns
+        -------
+        result  : int
+            書き込んだバイト数 [bytes]
+        '''
+        packets = {
+            self.right_mode_key_    : right,
+            self.left_mode_key_     : left
         }
 
         return self.send_(packets)

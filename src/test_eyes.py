@@ -24,7 +24,14 @@ WIDTH = HALF_WIDTH*2
 EYELID_SLOW_MODE = True
 
 #瞳の画像のファイルパス
-PUPIL_FILE_PATH ='img/pupil.png'
+PUPIL_R_FILE_PATHS =[
+    'img/pupil_normal.png',
+    'img/pupil_smile_right.png'
+]
+PUPIL_L_FILE_PATHS =[
+    'img/pupil_normal.png',
+    'img/pupil_smile_left.png'
+]
 
 #まぶたの映像とそれに対応するマスク映像のファイルパス
 if EYELID_SLOW_MODE == True:
@@ -40,20 +47,23 @@ BLINK_INTERVAL = 2.0
 BLINK_NUM = 2
 
 #背景(白目)を宣言
-color = [255,255,255]  #白色
-bg = np.zeros((HEIGHT, WIDTH, 3))
-bg += color[::-1]
+bg = np.ones((HEIGHT, WIDTH, 3), dtype=np.uint8)
 
 #瞳の画像を読み込み
-pupil = cv2.imread(PUPIL_FILE_PATH)
+r_pupils = []
+l_pupils = []
+for path in PUPIL_R_FILE_PATHS:
+    r_pupils.append(cv2.imread(path, cv2.IMREAD_COLOR))
+for path in PUPIL_L_FILE_PATHS:
+    l_pupils.append(cv2.imread(path, cv2.IMREAD_COLOR))
 #まぶたの映像を読み込み
 eyelid_img = cv2.VideoCapture(EYLID_FILE_PATH)
 #まぶたのマスク映像を読み込み
 eyelid_m_img = cv2.VideoCapture(EYLID_MASK_FILE_PATH)
 
 #左右の眼のクラスオブジェクトを宣言
-right = Eye(bg, pupil, min_range=[0, 0],          max_range=[HEIGHT, HALF_WIDTH])
-left = Eye(bg, pupil,  min_range=[0, HALF_WIDTH], max_range=[HEIGHT, WIDTH])
+right = Eye(bg, r_pupils, min_range=[0, 0],          max_range=[HEIGHT, HALF_WIDTH])
+left = Eye(bg, l_pupils,  min_range=[0, HALF_WIDTH], max_range=[HEIGHT, WIDTH])
 
 #まぶたのクラスオブジェクトを宣言
 eyelid = EyeLid(eyelid_img, eyelid_m_img)
@@ -68,6 +78,9 @@ left.set_pos(0, 0)
 
 #瞬きの間隔と1回の瞬きにおいてまぶたを閉じる回数を指定する。
 eyelid.set_interval(BLINK_INTERVAL, BLINK_NUM)
+
+right.change_mode(0)
+left.change_mode(0)
 
 x = y = 0
 while True:

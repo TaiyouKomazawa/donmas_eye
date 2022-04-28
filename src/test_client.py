@@ -29,6 +29,8 @@ def main():
     client.set_blink_interval(3.5)
     #瞳の位置を原点にセット
     client.set_pos(0, 0)
+    #瞳のモードをセット(右:通常の瞳(0), 左:通常の瞳(0))
+    client.set_mode(0, 0)
 
     x = y = 0
     while True:

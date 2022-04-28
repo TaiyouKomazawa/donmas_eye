@@ -23,7 +23,7 @@ SCENARIO_SERVER_IP = '127.0.0.1'
 CTRL_SERVER_IP = '127.0.0.1'
 
 
-SCENARIO_SERVER_PORT = 35002
+SCENARIO_SERVER_PORT = 35001
 #使用するネットワーク上のポート番号(donmasu_eye_server.pyで指定したポート番号と同じものを指定する。)
 CTRL_SERVER_PORT = 35000
 
@@ -137,14 +137,20 @@ class Scenario2Server:
                     print('Got command eyelid interval. t:{0}'.format(t))
                     self.client_.set_blink_interval(t)
                     
-                elif  cmd_type == 'C2': #C2 : 表情のモードを設定するコマンドの場合(現在未実装)
+                elif  cmd_type == 'C2': #C2 : 表情(瞳)のモードを設定するコマンドの場合
                     cmd_list = {
-                        'M' : 0
+                        'M' : '00' #十の位:左のモード、一の位:右のモード
                     }
 
                     for cmd in cmd_data.groups():
                         if cmd:
-                            cmd_list[cmd[0]] = int(cmd[1:])
+                            cmd_list[cmd[0]] = cmd[1:]
+
+                    mode = cmd_list['M']
+                    left = int(mode[0])
+                    right = int(mode[1])
+                    print('Got command pupil mode. L:{0}, R:{0}'.format(left, right))
+                    self.client_.set_mode(right, left)
                     
                 else:
                     continue
