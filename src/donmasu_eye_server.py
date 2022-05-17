@@ -51,15 +51,15 @@ else:
     EYLID_MASK_FILE_PATH = 'video/bin/eyelid_fast.gif'
 
 #背景(白目)を宣言
-bg = np.ones((HEIGHT, WIDTH, 3), dtype=np.uint8)
+bg = 255*np.ones((HEIGHT, WIDTH, 3), dtype=np.uint8)
 
 #瞳の画像を読み込み
 r_pupils = []
 l_pupils = []
 for path in PUPIL_R_FILE_PATHS:
-    r_pupils.append(cv2.imread(path), cv2.IMREAD_COLOR)
+    r_pupils.append(cv2.imread(path, cv2.IMREAD_COLOR))
 for path in PUPIL_L_FILE_PATHS:
-    l_pupils.append(cv2.imread(path), cv2.IMREAD_COLOR)
+    l_pupils.append(cv2.imread(path, cv2.IMREAD_COLOR))
 #まぶたの映像を読み込み
 eyelid_img = cv2.VideoCapture(EYLID_FILE_PATH)
 #まぶたのマスク映像を読み込み

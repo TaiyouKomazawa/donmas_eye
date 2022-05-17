@@ -181,11 +181,6 @@ class EyeLid:
             ret, frame = self.eyelid_.read()
 
             if ret_m and ret:
-                
-                mask = mask.astype(np.float64)
-                frame = frame.astype(np.float64)
-                frame /= 255
-
                 masked_src = cv2.bitwise_and(src, mask)
                 return cv2.addWeighted(masked_src, 1, frame, 1, 0)
             else:
