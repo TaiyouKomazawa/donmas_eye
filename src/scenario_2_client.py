@@ -7,6 +7,7 @@ author  : Taiyou Komazawa
 date    : 2022/4/27
 '''
 
+import sys
 import time
 import random
 import re
@@ -14,18 +15,27 @@ import socket
 import threading
 
 
+args = sys.argv
+
+TARGET_IP = args[1]
+TARGET_PORT = int(args[2])
+print("Server IP:", TARGET_IP)
+print("Server PORT:", TARGET_PORT)
+
 #ライブラリからEyesControlClientクラスを読み込む
 from libs.lib_donmasu_eye import EyesControlClient
 
 from libs.lib_curves import Proportion
 
 #127.0.0.1はデバイス内のシナリオサーバからデータを受け取るためのローカルループバック用のIPアドレス。
-SCENARIO_SERVER_IP = '127.0.0.1'
+#SCENARIO_SERVER_IP = '192.168.0.34'
+SCENARIO_SERVER_IP = TARGET_IP
 #接続先(EyesControlServer)のIPアドレス
 CTRL_SERVER_IP = '127.0.0.1'
 
 #シナリオサーバのポート番号
-SCENARIO_SERVER_PORT = 35001
+#SCENARIO_SERVER_PORT = 35001
+SCENARIO_SERVER_PORT = TARGET_PORT
 #接続先のポート番号(donmasu_eye_server.pyで指定したポート番号と同じものを指定する。)
 CTRL_SERVER_PORT = 35000
 
