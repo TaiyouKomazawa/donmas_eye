@@ -9,6 +9,7 @@
 import cv2
 import numpy as np
 
+import random
 import time
 import copy
 
@@ -138,10 +139,13 @@ class EyeLid:
         self.eyelid_mask_ = eyelid_mask
         self.last_lid_time = time.time()
 
-        self.lid_sec_ = 4.0
+        self.lid_sec_ = 3.0
         self.lid_loop_ = 2
+        self.lid_scat_ = 7.0
 
-    def set_interval(self, sec, loop=2):
+        self.lid_ex_sec_ = random.uniform(0, self.lid_scat_)
+
+    def set_interval(self, sec, loop=2, scat_sec=6.0):
         '''
         瞬きの間隔を指定する関数
 
@@ -153,14 +157,19 @@ class EyeLid:
         loop    : int
             1回の瞬きにおけるまぶたを閉じる回数[回]
         
+        scat_sec: float
+            瞬きの間隔の散乱具合[sec]
+        
         Returns
         -------
         None
         '''
         self.lid_sec_ = sec
         self.lid_loop_ = loop
+        self.lid_scat_ = scat_sec
         self.loop_cnt = 1
         self.last_lid_time = time.time()
+        self.lid_ex_sec_ = random.uniform(0, self.lid_scat_)
 
     def spin_once(self, src):
         '''
@@ -176,7 +185,7 @@ class EyeLid:
         dst     : ndarray
             出力画像。瞬きの待ち時間であれば入力画像がそのまま返却される
         '''
-        if (time.time() - self.last_lid_time) > self.lid_sec_: 
+        if (time.time() - self.last_lid_time) > (self.lid_sec_+self.lid_ex_sec_): 
             ret_m, mask = self.eyelid_mask_.read()
             ret, frame = self.eyelid_.read()
 
@@ -190,7 +199,8 @@ class EyeLid:
                     self.loop_cnt += 1
                 else:
                     self.last_lid_time = time.time()
-                    self.loop_cnt = 1
+                    self.loop_cnt = random.randint(1, self.lid_loop_)
+                    self.lid_ex_sec_ = random.uniform(0, self.lid_scat_)
                 return src
         else:
             return src
@@ -233,7 +243,7 @@ class EyesControlServer:
         self.packets = {
             self.x_pos_key_ : 0.5,
             self.y_pos_key_ : 0.5,
-            self.blink_period_key_ : 2.0,
+            self.blink_period_key_ : 3,
             self.blink_num_key_ : 2,
             self.right_mode_key_: 0,
             self.left_mode_key_: 0
