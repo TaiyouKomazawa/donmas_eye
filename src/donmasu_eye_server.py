@@ -35,11 +35,13 @@ EYELID_SLOW_MODE = True
 #瞳の画像のファイルパス
 PUPIL_R_FILE_PATHS =[
     'img/pupil_normal.png',
-    'img/pupil_smile_right.png'
+    'img/pupil_smile_right.png',
+    'img/pupil_fire.png'
 ]
 PUPIL_L_FILE_PATHS =[
     'img/pupil_normal.png',
-    'img/pupil_smile_left.png'
+    'img/pupil_smile_left.png',
+    'img/pupil_fire.png'
 ]
 
 #まぶたの映像とそれに対応するマスク映像のファイルパス

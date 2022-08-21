@@ -54,6 +54,7 @@ class Scenario2Server:
     def __init__(self, ctrl_server_addr, scenario_addr=['127.0.0.1', 22], timeout=10):
 
         self.all_pattern = re.compile('EYDMRP(C\d+)(.*)')
+        self.all_pattern_ex = re.compile('EYDMRP(\D+)')
         self.sub_pattern = re.compile('(\D\d+)?(\D\d+)?(\D\d+)?(\D\d+)?.*')
 
         self.linear_x = Proportion(0.5)
@@ -126,9 +127,92 @@ class Scenario2Server:
                 break
 
             if len(data) != 0:
-                cmds = self.all_pattern.match(data.decode('utf-8'))
+                dec_data = data.decode('utf-8')
+
+                cmds = self.all_pattern.match(dec_data)
 
                 if cmds is None:
+                    #追加のコマンド系、簡易的なコマンドの判定
+                    cmds_ex = self.all_pattern_ex.match(dec_data)
+                    if cmds_ex is not None:
+                        group = cmds_ex.groups()
+                        cmd_type = group[0]
+                        print(cmd_type)
+                        if cmd_type == 'C': #C : 瞳を中心に戻す
+                            x = 0.5
+                            y = 0.5
+                            dt = 0.7
+                            print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
+                            self.linear_x.reset(x, dt)
+                            self.linear_y.reset(y, dt)
+                        elif cmd_type == 'U': #U : 瞳を上に動かす
+                            x = 0.5
+                            y = 0.2
+                            dt = 0.7
+                            print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
+                            self.linear_x.reset(x, dt)
+                            self.linear_y.reset(y, dt)
+                        elif cmd_type == 'D': #D : 瞳を下に動かす
+                            x = 0.5
+                            y = 0.8
+                            dt = 0.7
+                            print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
+                            self.linear_x.reset(x, dt)
+                            self.linear_y.reset(y, dt)
+                        elif cmd_type == 'L': #L : 瞳を左に動かす
+                            x = 0.2
+                            y = 0.5
+                            dt = 0.7
+                            print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
+                            self.linear_x.reset(x, dt)
+                            self.linear_y.reset(y, dt)
+                        elif cmd_type == 'R': #R : 瞳を右に動かす
+                            x = 0.8
+                            y = 0.5
+                            dt = 0.7
+                            print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
+                            self.linear_x.reset(x, dt)
+                            self.linear_y.reset(y, dt)
+                        elif cmd_type == 'RU': #RU : 瞳を右上に動かす
+                            x = 0.8
+                            y = 0.2
+                            dt = 0.7
+                            print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
+                            self.linear_x.reset(x, dt)
+                            self.linear_y.reset(y, dt)
+                        elif cmd_type == 'RD': #RD : 瞳を右下に動かす
+                            x = 0.8
+                            y = 0.8
+                            dt = 0.7
+                            print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
+                            self.linear_x.reset(x, dt)
+                            self.linear_y.reset(y, dt)
+                        elif cmd_type == 'LU': #LU : 瞳を左上に動かす
+                            x = 0.2
+                            y = 0.2
+                            dt = 0.7
+                            print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
+                            self.linear_x.reset(x, dt)
+                            self.linear_y.reset(y, dt)
+                        elif cmd_type == 'LD': #LD : 瞳を左下に動かす
+                            x = 0.2
+                            y = 0.8
+                            dt = 0.7
+                            print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
+                            self.linear_x.reset(x, dt)
+                            self.linear_y.reset(y, dt)
+                        elif cmd_type == 'NORMAL': #NORMAL : 通常
+                            self.client_.set_mode(0, 0)
+                            self.client_.set_blink_interval(3)
+                        elif cmd_type == 'SMILE': #SMILE : 笑顔
+                            self.linear_x.reset(0.5, 0)
+                            self.linear_y.reset(0.5, 0)
+                            self.client_.set_blink_interval(86400) #24時間まばたきを待つ
+                            self.client_.set_mode(1, 1)
+                        elif cmd_type == 'FIRE': #FIRE : 熱血(炎の瞳)
+                            self.client_.set_mode(2, 2)
+                            self.client_.set_blink_interval(3)
+
                     continue
 
                 group = cmds.groups()
@@ -183,7 +267,6 @@ class Scenario2Server:
                     right = int(mode[1])
                     print('Got command pupil mode. L:{0}, R:{0}'.format(left, right))
                     self.client_.set_mode(right, left)
-                    
                 else:
                     continue
 
