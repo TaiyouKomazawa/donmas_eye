@@ -36,14 +36,14 @@ EYELID_SLOW_MODE = True
 PUPIL_R_FILE_PATHS =[
     'img/pupil_normal.png',
     'img/pupil_smile_right.png',
-    'img/pupil_fire.png',
+    'img/pupil_fire_fast.gif',
     'img/pupil_dame_right.png',
     'img/pupil_akire_right.png'
 ]
 PUPIL_L_FILE_PATHS =[
     'img/pupil_normal.png',
     'img/pupil_smile_left.png',
-    'img/pupil_fire.png',
+    'img/pupil_fire_fast.gif',
     'img/pupil_dame_left.png',
     'img/pupil_akire_left.png'
 ]
@@ -59,21 +59,15 @@ else:
 #背景(白目)を宣言
 bg = 255*np.ones((HEIGHT, WIDTH, 3), dtype=np.uint8)
 
-#瞳の画像を読み込み
-r_pupils = []
-l_pupils = []
-for path in PUPIL_R_FILE_PATHS:
-    r_pupils.append(cv2.imread(path, cv2.IMREAD_COLOR))
-for path in PUPIL_L_FILE_PATHS:
-    l_pupils.append(cv2.imread(path, cv2.IMREAD_COLOR))
 #まぶたの映像を読み込み
 eyelid_img = cv2.VideoCapture(EYLID_FILE_PATH)
 #まぶたのマスク映像を読み込み
 eyelid_m_img = cv2.VideoCapture(EYLID_MASK_FILE_PATH)
 
 #左右の眼のクラスオブジェクトを宣言
-right = Eye(bg, r_pupils, min_range=[0, 0],          max_range=[HEIGHT, HALF_WIDTH])
-left = Eye(bg, l_pupils,  min_range=[0, HALF_WIDTH], max_range=[HEIGHT, WIDTH])
+right = Eye(bg, PUPIL_R_FILE_PATHS, min_range=[0, 0],          max_range=[HEIGHT, HALF_WIDTH])
+left = Eye(bg, PUPIL_L_FILE_PATHS,  min_range=[0, HALF_WIDTH], max_range=[HEIGHT, WIDTH])
+
 
 #まぶたのクラスオブジェクトを宣言
 eyelid = EyeLid(eyelid_img, eyelid_m_img)

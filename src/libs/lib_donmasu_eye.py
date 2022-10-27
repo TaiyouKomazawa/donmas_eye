@@ -6,6 +6,9 @@
 
 '''
 
+import os.path
+import time
+
 import cv2
 import numpy as np
 
@@ -21,7 +24,7 @@ import threading
 #眼(瞳)のアニメーションを定義するクラス
 class Eye:
 
-    def __init__(self, bg, pupils, min_range=[0,0], max_range=[0,0]):
+    def __init__(self, bg, pupil_paths, min_range=[0,0], max_range=[0,0]):
         '''
         クラスコンストラクタ
 
@@ -30,8 +33,8 @@ class Eye:
         bg          : ndarray
             使用する背景(白目)画像
 
-        pupils       : [ndarray, ...]
-            瞳の画像のリスト(モード順のリスト)
+        pupil_paths       : [string, ...]
+            瞳の画像(またはgif)のパスのリスト(モード順のリスト)
 
         min_range   : [float, float]
             原点(y,x)=(0.0, 0.0)のオフセット画素値[pixel]
@@ -40,8 +43,17 @@ class Eye:
             最大値(y,x)=(1.0, 1.0)のオフセット画素値[pixel]
         '''
         self.bg_ = bg
-
-        self.pupils_ = pupils
+        
+        self.pupils_ = []
+        self.pupils_gif_mode = []
+        for pupil_path in pupil_paths:
+            root, ext = os.path.splitext(pupil_path)
+            if ext == '.gif':
+                self.pupils_.append(cv2.VideoCapture(pupil_path))
+                self.pupils_gif_mode.append(True)
+            else:
+                self.pupils_.append(cv2.imread(pupil_path, cv2.IMREAD_COLOR))
+                self.pupils_gif_mode.append(False)
 
         self.bg_r_ = self.bg_.shape[:2]
 
@@ -66,16 +78,23 @@ class Eye:
         None
         '''
         if mode < len(self.pupils_):
-            pupil = self.pupils_[mode]
+            self.pupil_ = self.pupils_[mode]
+            self.pupil_gif_mode = self.pupils_gif_mode[mode]
 
-            self.pupil_r_ = pupil.shape[:2]
+            if self.pupil_gif_mode:
+                self.pupil_r_ = [int(self.pupil_.get(cv2.CAP_PROP_FRAME_HEIGHT)), 
+                                int(self.pupil_.get(cv2.CAP_PROP_FRAME_WIDTH))]
+                self.pupil_.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                self.last_f_tim_ = time.time()
+            else:
+                self.pupil_r_ = self.pupil_.shape[:2]
+
             self.min_mr_ = [self.min_r_[0], self.min_r_[1]]
             self.min_mr_[0] += self.pupil_r_[0] / 2
             self.min_mr_[1] += self.pupil_r_[1] / 2
             self.max_mr_ = [self.max_r_[0], self.max_r_[1]]
             self.max_mr_[0] -= self.pupil_r_[0] / 2
             self.max_mr_[1] -= self.pupil_r_[1] / 2
-            self.pupil_ = pupil
             self.set_pos(0.5, 0.5)
 
     def set_pos(self, y, x):
@@ -115,9 +134,31 @@ class Eye:
         dst     : ndarray
             出力画像
         '''
+
         dst = copy.copy(src)
-        dst[self.p_org_px[0]:self.p_org_px[0]+self.pupil_.shape[0], 
-            self.p_org_px[1]:self.p_org_px[1]+self.pupil_.shape[1]] = self.pupil_
+
+        if self.pupil_gif_mode:
+
+            T = 1.0/self.pupil_.get(cv2.CAP_PROP_FPS)
+            img = 0
+
+            if (time.time() - self.last_f_tim_) >= T:
+                if self.pupil_.get(cv2.CAP_PROP_POS_FRAMES) >= self.pupil_.get(cv2.CAP_PROP_FRAME_COUNT):
+                    self.pupil_.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+                ret, img = self.pupil_.read()
+                self.last_f_tim_ = time.time()
+            else:
+                ret, img = self.pupil_.retrieve()
+
+            if ret:
+                dst[self.p_org_px[0]:self.p_org_px[0]+self.pupil_r_[0], 
+                    self.p_org_px[1]:self.p_org_px[1]+self.pupil_r_[1]] = img
+
+        else:
+            dst[self.p_org_px[0]:self.p_org_px[0]+self.pupil_r_[0], 
+                self.p_org_px[1]:self.p_org_px[1]+self.pupil_r_[1]] = self.pupil_
+ 
         return dst
 
 #まぶた(瞬き)のアニメーションを定義するクラス
