@@ -10,6 +10,9 @@
 SCR_DIR=$(cd $(dirname $0); pwd)
 cd $SCR_DIR
 
+#exec 1>>stdout.log
+#exec 2>>stderr.log
+
 python3 src/donmasu_eye_server.py &
-sleep 3s
+sleep 10s
 python3 src/scenario_2_client.py $1 $2
