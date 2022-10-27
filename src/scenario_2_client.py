@@ -54,7 +54,7 @@ class Scenario2Server:
     def __init__(self, ctrl_server_addr, scenario_addr=['127.0.0.1', 22], timeout=10):
 
         self.all_pattern = re.compile('EYDMRP(C\d+)(.*)')
-        self.all_pattern_ex = re.compile('EYDMRP(\D+)')
+        self.all_pattern_ex = re.compile('EYDMRP([^0-9\t\n\r\f\v]+)')
         self.sub_pattern = re.compile('(\D\d+)?(\D\d+)?(\D\d+)?(\D\d+)?.*')
 
         self.linear_x = Proportion(0.5)
@@ -173,28 +173,28 @@ class Scenario2Server:
                             print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
                             self.linear_x.reset(x, dt)
                             self.linear_y.reset(y, dt)
-                        elif cmd_type == 'RU': #RU : 瞳を右上に動かす
+                        elif cmd_type == 'RU' or cmd_type == 'UR': #RU : 瞳を右上に動かす
                             x = 0.8
                             y = 0.2
                             dt = 0.7
                             print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
                             self.linear_x.reset(x, dt)
                             self.linear_y.reset(y, dt)
-                        elif cmd_type == 'RD': #RD : 瞳を右下に動かす
+                        elif cmd_type == 'RD' or cmd_type == 'DR': #RD : 瞳を右下に動かす
                             x = 0.8
                             y = 0.8
                             dt = 0.7
                             print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
                             self.linear_x.reset(x, dt)
                             self.linear_y.reset(y, dt)
-                        elif cmd_type == 'LU': #LU : 瞳を左上に動かす
+                        elif cmd_type == 'LU' or cmd_type == 'UL': #LU : 瞳を左上に動かす
                             x = 0.2
                             y = 0.2
                             dt = 0.7
                             print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
                             self.linear_x.reset(x, dt)
                             self.linear_y.reset(y, dt)
-                        elif cmd_type == 'LD': #LD : 瞳を左下に動かす
+                        elif cmd_type == 'LD' or cmd_type == 'DL': #LD : 瞳を左下に動かす
                             x = 0.2
                             y = 0.8
                             dt = 0.7
@@ -222,6 +222,8 @@ class Scenario2Server:
                         elif cmd_type == 'AKIRE': #AKIRE : 呆れた目
                             self.client_.set_mode(4, 4)
                             self.client_.set_blink_interval(3)
+                        else:
+                            print('Unknown ex command.')
                     continue
 
                 group = cmds.groups()
