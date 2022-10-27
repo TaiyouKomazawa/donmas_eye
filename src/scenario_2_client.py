@@ -220,8 +220,8 @@ class Scenario2Server:
                             self.client_.set_mode(3, 3)
                             self.client_.set_blink_interval(3)
                         elif cmd_type == 'AKIRE': #AKIRE : 呆れた目
+                            self.client_.set_blink_interval(86400) #24時間まばたきを待つ
                             self.client_.set_mode(4, 4)
-                            self.client_.set_blink_interval(3)
                         else:
                             print('Unknown ex command.')
                     continue
