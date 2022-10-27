@@ -216,7 +216,12 @@ class Scenario2Server:
                         elif cmd_type == 'LCLOSE': #LCLOSE : 左目を瞑る
                             self.client_.set_blink_interval(86400) #24時間まばたきを待つ
                             self.client_.set_mode(0, 1)
-
+                        elif cmd_type == 'DAME': #DAME : ダメ~な目
+                            self.client_.set_mode(3, 3)
+                            self.client_.set_blink_interval(3)
+                        elif cmd_type == 'AKIRE': #AKIRE : 呆れた目
+                            self.client_.set_mode(4, 4)
+                            self.client_.set_blink_interval(3)
                     continue
 
                 group = cmds.groups()
