@@ -65,8 +65,8 @@ eyelid_img = cv2.VideoCapture(EYLID_FILE_PATH)
 eyelid_m_img = cv2.VideoCapture(EYLID_MASK_FILE_PATH)
 
 #左右の眼のクラスオブジェクトを宣言
-right = Eye(bg, PUPIL_R_FILE_PATHS, min_range=[0, 0],          max_range=[HEIGHT, HALF_WIDTH])
-left = Eye(bg, PUPIL_L_FILE_PATHS,  min_range=[0, HALF_WIDTH], max_range=[HEIGHT, WIDTH])
+right = Eye(bg, PUPIL_R_FILE_PATHS, min_range=[0, 0],          max_range=[HEIGHT, HALF_WIDTH], th=-30.0)
+left = Eye(bg, PUPIL_L_FILE_PATHS,  min_range=[0, HALF_WIDTH], max_range=[HEIGHT, WIDTH], th=30.0)
 
 
 #まぶたのクラスオブジェクトを宣言
@@ -79,6 +79,7 @@ cv2.namedWindow("eyes_test", cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty("eyes_test", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 def main():
+    print('Launch eye server.')
     while True:
         #右目を描画
         eye = right.get_image(bg)

@@ -24,7 +24,7 @@ import threading
 #眼(瞳)のアニメーションを定義するクラス
 class Eye:
 
-    def __init__(self, bg, pupil_paths, min_range=[0,0], max_range=[0,0]):
+    def __init__(self, bg, pupil_paths, min_range=[0,0], max_range=[0,0], th=0.0):
         '''
         クラスコンストラクタ
 
@@ -41,6 +41,9 @@ class Eye:
 
         max_range   : [float, float]
             最大値(y,x)=(1.0, 1.0)のオフセット画素値[pixel]
+
+        th  : float
+            眼の固定角度(度)
         '''
         self.bg_ = bg
         
@@ -61,6 +64,9 @@ class Eye:
         self.max_r_ = max_range
 
         self.p_org_px = (0.5, 0.5)
+
+        self.cos_th = np.cos(th/180*np.pi)
+        self.sin_th = np.sin(th/180*np.pi)
 
         self.change_mode(0)
 
@@ -108,16 +114,19 @@ class Eye:
 
         x   : float 
             眼のx座標((横方向のpixel数)*0.0-1.0)
-
         Returns
         -------
         None
         '''
-        np.clip(y, 0.0, 1.0)
-        np.clip(x, 0.0, 1.0)
 
-        px_pos = (  (self.max_mr_[0] - self.min_mr_[0]) * y + self.min_mr_[0],
-                    (self.max_mr_[1] - self.min_mr_[1]) * x + self.min_mr_[1])
+        rot_x = (x-0.5)*self.cos_th - (y-0.5)*self.sin_th + 0.5
+        rot_y = (x-0.5)*self.sin_th + (y-0.5)*self.cos_th + 0.5
+
+        np.clip(rot_y, 0.0, 1.0)
+        np.clip(rot_x, 0.0, 1.0)
+
+        px_pos = (  (self.max_mr_[0] - self.min_mr_[0]) * rot_y + self.min_mr_[0],
+                    (self.max_mr_[1] - self.min_mr_[1]) * rot_x + self.min_mr_[1])
         self.p_org_px = (int(px_pos[0]-self.pupil_r_[0]/2), int(px_pos[1]-self.pupil_r_[1]/2))
 
     def get_image(self, src):
