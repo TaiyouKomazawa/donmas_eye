@@ -147,7 +147,7 @@ class Scenario2Server:
                             self.linear_y.reset(y, dt)
                         elif cmd_type == 'U': #U : 瞳を上に動かす
                             x = 0.5
-                            y = 0.2
+                            y = 0.1
                             dt = 0.7
                             print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
                             self.linear_x.reset(x, dt)
@@ -175,7 +175,7 @@ class Scenario2Server:
                             self.linear_y.reset(y, dt)
                         elif cmd_type == 'RU' or cmd_type == 'UR': #RU : 瞳を右上に動かす
                             x = 0.8
-                            y = 0.2
+                            y = 0.1
                             dt = 0.7
                             print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
                             self.linear_x.reset(x, dt)
@@ -189,7 +189,7 @@ class Scenario2Server:
                             self.linear_y.reset(y, dt)
                         elif cmd_type == 'LU' or cmd_type == 'UL': #LU : 瞳を左上に動かす
                             x = 0.2
-                            y = 0.2
+                            y = 0.1
                             dt = 0.7
                             print('Got command moving pupil. x:{0}, y:{1}, t:{2}'.format(x, y, dt))
                             self.linear_x.reset(x, dt)
