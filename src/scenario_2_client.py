@@ -193,22 +193,22 @@ class Scenario2Server:
                             self.client_.set_mode(0, 0)
                             self.client_.set_blink_interval(3)
                         elif cmd_type == 'SMILE': #SMILE : 笑顔
-                            self.client_.set_blink_interval(86400) #24時間まばたきを待つ
+                            self.client_.set_blink_interval(3, 0) #瞬き回数を0に
                             self.client_.set_mode(1, 1)
                         elif cmd_type == 'FIRE': #FIRE : 熱血(炎の瞳)
-                            self.client_.set_blink_interval(86400) #24時間まばたきを待つ
+                            self.client_.set_blink_interval(3, 0) #瞬き回数を0に
                             self.client_.set_mode(2, 2)
                         elif cmd_type == 'RCLOSE': #RCLOSE : 右目を瞑る
-                            self.client_.set_blink_interval(86400) #24時間まばたきを待つ
+                            self.client_.set_blink_interval(3, 0) #瞬き回数を0に
                             self.client_.set_mode(1, 0)
                         elif cmd_type == 'LCLOSE': #LCLOSE : 左目を瞑る
-                            self.client_.set_blink_interval(86400) #24時間まばたきを待つ
+                            self.client_.set_blink_interval(3, 0) #瞬き回数を0に
                             self.client_.set_mode(0, 1)
                         elif cmd_type == 'DAME': #DAME : ダメ~な目
-                            self.client_.set_blink_interval(86400) #24時間まばたきを待つ
+                            self.client_.set_blink_interval(3, 0) #瞬き回数を0に
                             self.client_.set_mode(3, 3)
                         elif cmd_type == 'AKIRE': #AKIRE : 呆れた目
-                            self.client_.set_blink_interval(86400) #24時間まばたきを待つ
+                            self.client_.set_blink_interval(3, 0) #瞬き回数を0に
                             self.client_.set_mode(4, 4)
                         else:
                             print('Unknown ex command.')

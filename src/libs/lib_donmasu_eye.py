@@ -252,6 +252,10 @@ class EyeLid:
         dst     : ndarray
             出力画像。瞬きの待ち時間であれば入力画像がそのまま返却される
         '''
+        if self.lid_loop_ <= 0:
+            self.last_lid_time = time.time()
+            return src
+
         if (time.time() - self.last_lid_time) > (self.lid_sec_+self.lid_ex_sec_): 
             ret_m, mask = self.eyelid_mask_.read()
             ret, frame = self.eyelid_.read()
