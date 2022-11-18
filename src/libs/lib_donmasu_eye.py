@@ -63,12 +63,14 @@ class Eye:
         self.min_r_ = min_range
         self.max_r_ = max_range
 
-        self.p_org_px = (0.5, 0.5)
+        self.p_org_px_ = (0, 0)
+        self.p_n_px_ = (0, 0)
 
         self.cos_th = np.cos(th/180*np.pi)
         self.sin_th = np.sin(th/180*np.pi)
 
         self.change_mode(0)
+        self.last_n_tim_ = time.time()
 
     def change_mode(self, mode):
         '''
@@ -127,9 +129,9 @@ class Eye:
 
         px_pos = (  (self.max_mr_[0] - self.min_mr_[0]) * rot_y + self.min_mr_[0],
                     (self.max_mr_[1] - self.min_mr_[1]) * rot_x + self.min_mr_[1])
-        self.p_org_px = (int(px_pos[0]-self.pupil_r_[0]/2), int(px_pos[1]-self.pupil_r_[1]/2))
+        self.p_org_px_ = (int(px_pos[0]-self.pupil_r_[0]/2), int(px_pos[1]-self.pupil_r_[1]/2))
 
-    def spin_once(self, src):
+    def spin_once(self, src, noise_px_range=2, noise_sec=1.0):
         '''
         瞳を描写する関数
 
@@ -137,6 +139,10 @@ class Eye:
         ----------
         src     : ndarray
             入力する画像
+        noise_px_range : int
+            眼の座標振れ幅
+        noise_sec : float
+            瞳の座標振れ間隔
 
         Returns
         -------
@@ -145,6 +151,13 @@ class Eye:
         '''
 
         dst = copy.copy(src)
+
+        if((time.time()-self.last_n_tim_) > noise_sec):
+            self.p_n_px_ = [    
+                random.randint(0, noise_px_range),
+                random.randint(0, noise_px_range)
+            ]
+            self.last_n_tim_ = time.time()
 
         if self.pupil_gif_mode:
 
@@ -161,12 +174,16 @@ class Eye:
                 ret, img = self.pupil_.retrieve()
 
             if ret:
-                dst[self.p_org_px[0]:self.p_org_px[0]+self.pupil_r_[0], 
-                    self.p_org_px[1]:self.p_org_px[1]+self.pupil_r_[1]] = img
+                dst[(self.p_org_px_[0]+self.p_n_px_[0]):
+                    (self.p_org_px_[0]+self.p_n_px_[0])+self.pupil_r_[0], 
+                    (self.p_org_px_[1]+self.p_n_px_[1]):
+                    (self.p_org_px_[1]+self.p_n_px_[1])+self.pupil_r_[1]] = img
 
         else:
-            dst[self.p_org_px[0]:self.p_org_px[0]+self.pupil_r_[0], 
-                self.p_org_px[1]:self.p_org_px[1]+self.pupil_r_[1]] = self.pupil_
+            dst[(self.p_org_px_[0]+self.p_n_px_[0]):
+                (self.p_org_px_[0]+self.p_n_px_[0])+self.pupil_r_[0], 
+                (self.p_org_px_[1]+self.p_n_px_[1]):
+                (self.p_org_px_[1]+self.p_n_px_[1])+self.pupil_r_[1]] = self.pupil_
  
         return dst
 

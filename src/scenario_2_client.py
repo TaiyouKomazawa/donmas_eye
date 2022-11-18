@@ -60,10 +60,6 @@ class Scenario2Server:
         self.linear_x = Proportion(0.5)
         self.linear_y = Proportion(0.5)
 
-        self.last_tim = time.time()
-        self.noise_x = 0
-        self.noise_y = 0
-
         self._is_alive_ = True
         self.init_socket_(scenario_addr[0], scenario_addr[1], timeout)
         self.client_ = EyesControlClient(ctrl_server_addr[0], ctrl_server_addr[1])
@@ -71,17 +67,9 @@ class Scenario2Server:
     def __del__(self):
         self.kill_process()
 
-    def spin_once(self, noise_range=1E-5, noise_sec=1.0):
+    def spin_once(self):
         x, xrlt = self.linear_x.get_out()
         y, yrlt = self.linear_y.get_out()
-
-        if((time.time()-self.last_tim) > noise_sec) :
-            self.noise_x = random.uniform(-noise_range, noise_range)
-            self.noise_y = random.uniform(-noise_range, noise_range)
-            self.last_tim = time.time()
-
-        x += self.noise_x
-        y += self.noise_y
 
         self.client_.set_pos(x, y)
 
