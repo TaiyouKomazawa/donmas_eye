@@ -52,11 +52,9 @@ class Eye:
         for pupil_path in pupil_paths:
             root, ext = os.path.splitext(pupil_path)
             if ext == '.gif':
-                self.pupils_.append(cv2.VideoCapture(pupil_path))
-                self.pupils_gif_mode.append(True)
+                self.add_mode(cv2.VideoCapture(pupil_path))
             else:
-                self.pupils_.append(cv2.imread(pupil_path, cv2.IMREAD_COLOR))
-                self.pupils_gif_mode.append(False)
+                self.add_mode(cv2.imread(pupil_path, cv2.IMREAD_COLOR))
 
         self.bg_r_ = self.bg_.shape[:2]
 
@@ -72,6 +70,35 @@ class Eye:
         self.change_mode(0)
         self.last_n_tim_ = time.time()
 
+    def add_mode(self, img):
+        '''
+        瞳のタイプを追加する関数
+
+        Parameters
+        ----------
+        img     :   ndarray or cv2.VideoCapture
+            瞳の画像(またはgif映像)
+
+        Returns
+        -------
+        rlt     :   bool
+            追加が成功したかどうか(True : 成功)
+        '''
+        rlt = False
+
+        if type(img) is cv2.VideoCapture:
+            self.pupils_.append(img)
+            self.pupils_gif_mode.append(True)
+            rlt = True
+        elif type(img) is np.ndarray:
+            self.pupils_.append(img)
+            self.pupils_gif_mode.append(False)
+            rlt = True
+        else:
+            pass
+
+        return rlt
+
     def change_mode(self, mode):
         '''
         瞳のタイプを変更する関数
@@ -85,6 +112,7 @@ class Eye:
         -------
         None
         '''
+
         if mode < len(self.pupils_):
             self.pupil_ = self.pupils_[mode]
             self.pupil_gif_mode = self.pupils_gif_mode[mode]
