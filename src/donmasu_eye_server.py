@@ -72,7 +72,7 @@ left = Eye(bg, PUPIL_L_FILE_PATHS,  min_range=[0, HALF_WIDTH], max_range=[HEIGHT
 #まぶたのクラスオブジェクトを宣言
 eyelid = EyeLid(eyelid_img, eyelid_m_img)
 #コントロールサーバーのクラスオブジェクトを宣言(左右の眼のオブジェクト、まぶたのオブジェクト、使用するポートを引数に渡す)
-eyes_ctrl_server = EyesControlServer(right, left, eyelid, PORT)
+eyes_ctrl_server = EyesControlServer(bg, right, left, eyelid, PORT)
 
 #出力ウィンドウを定義(フルスクリーンで表示)
 cv2.namedWindow("eyes_test", cv2.WND_PROP_FULLSCREEN)
@@ -81,12 +81,8 @@ cv2.setWindowProperty("eyes_test", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREE
 def main():
     print('Launch eye server.')
     while True:
-        #右目を描画
-        eye = right.spin_once(bg)
-        #左目を描画
-        eyes = left.spin_once(eye)
-        #瞬きを描画
-        eyes = eyelid.spin_once(eyes)
+        #眼を描画
+        eyes = eyes_ctrl_server.get_image()
         #ウィンドウの画像を更新
         cv2.imshow("eyes_test", cv2.resize(eyes, dsize=(SCREEN_WIDTH, SCREEN_HEIGHT)))
 
