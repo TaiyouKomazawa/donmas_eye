@@ -395,6 +395,7 @@ class EyesControlServer:
                     self.set_mode_()
 
                 print('Data received!\n  data: {0}\n'.format(dict))
+                conn.send(data)
             else:
                 break
             
