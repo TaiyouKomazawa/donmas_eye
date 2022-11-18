@@ -129,7 +129,7 @@ class Eye:
                     (self.max_mr_[1] - self.min_mr_[1]) * rot_x + self.min_mr_[1])
         self.p_org_px = (int(px_pos[0]-self.pupil_r_[0]/2), int(px_pos[1]-self.pupil_r_[1]/2))
 
-    def get_image(self, src):
+    def spin_once(self, src):
         '''
         瞳を描写する関数
 

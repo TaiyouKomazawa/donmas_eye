@@ -82,9 +82,9 @@ def main():
     print('Launch eye server.')
     while True:
         #右目を描画
-        eye = right.get_image(bg)
+        eye = right.spin_once(bg)
         #左目を描画
-        eyes = left.get_image(eye)
+        eyes = left.spin_once(eye)
         #瞬きを描画
         eyes = eyelid.spin_once(eyes)
         #ウィンドウの画像を更新
