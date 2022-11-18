@@ -279,12 +279,15 @@ class EyeLid:
 #眼の動作を制御するサーバーの動作を定義するクラス
 class EyesControlServer:
 
-    def __init__(self, obj_right, obj_left, obj_eyelid, port, timeout=10):
+    def __init__(self, bg, obj_right, obj_left, obj_eyelid, port, timeout=10):
         '''
         クラスコンストラクタ
 
         Parameters
         ----------
+        bg          : ndarray
+            バックグラウンド画像
+
         obj_right   : Eye class object
             右目のクラスオブジェクト
 
@@ -300,6 +303,8 @@ class EyesControlServer:
         timeout     : int
             受付の待ち時間
         '''
+
+        self.bg_ = bg
         self.obj_right_ = obj_right
         self.obj_left_ = obj_left
         self.obj_eyelid_ = obj_eyelid
@@ -320,6 +325,8 @@ class EyesControlServer:
             self.left_mode_key_: 0
         }
 
+        self.mutex_ = threading.Lock()
+
         self.set_pos_()
         self.set_interval_()
 
@@ -331,6 +338,28 @@ class EyesControlServer:
         クラスデストラクタ
         '''
         self.kill_process()
+
+    def get_image(self):
+        '''
+        現在の眼の画像を出力します。
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        dst     : ndarray
+            眼が描画された画像
+        '''
+
+        self.mutex_.acquire()
+        r = self.obj_right_.spin_once(self.bg_)
+        rl = self.obj_left_.spin_once(r)
+        dst = self.obj_eyelid_.spin_once(rl)
+        self.mutex_.release()
+
+        return dst
 
     def kill_process(self):
         '''
@@ -400,6 +429,7 @@ class EyesControlServer:
 
             if len(data) != 0:
                 dict = pickle.loads(data)
+                self.mutex_.acquire()
                 if self.y_pos_key_ in dict and self.x_pos_key_ in dict:
                     self.packets[self.y_pos_key_] = dict[self.y_pos_key_]
                     self.packets[self.x_pos_key_] = dict[self.x_pos_key_]
@@ -414,7 +444,7 @@ class EyesControlServer:
                     self.packets[self.right_mode_key_] = dict[self.right_mode_key_]
                     self.packets[self.left_mode_key_] = dict[self.left_mode_key_]
                     self.set_mode_()
-
+                self.mutex_.release()
                 print('Data received!\n  data: {0}\n'.format(dict))
                 conn.send(data)
             else:
