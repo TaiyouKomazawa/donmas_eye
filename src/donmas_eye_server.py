@@ -13,7 +13,7 @@ import cv2
 import numpy as np
 
 #ライブラリからEyeとEyeLibとEyesControlServerクラスを読み込む
-from libs.lib_donmasu_eye import Eye, EyeLid, EyesControlServer
+from libs.lib_donmas_eye import Eye, EyeLid, EyesControlServer
 
 #使用するネットワーク上のポート番号
 PORT = 35000

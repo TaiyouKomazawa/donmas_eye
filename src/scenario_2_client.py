@@ -23,7 +23,7 @@ print("Server IP:", TARGET_IP)
 print("Server PORT:", TARGET_PORT)
 
 #ライブラリからEyesControlClientクラスを読み込む
-from libs.lib_donmasu_eye import EyesControlClient
+from libs.lib_donmas_eye import EyesControlClient
 
 from libs.lib_curves import Proportion
 
@@ -36,7 +36,7 @@ CTRL_SERVER_IP = '127.0.0.1'
 #シナリオサーバのポート番号
 #SCENARIO_SERVER_PORT = 35001
 SCENARIO_SERVER_PORT = TARGET_PORT
-#接続先のポート番号(donmasu_eye_server.pyで指定したポート番号と同じものを指定する。)
+#接続先のポート番号(donmas_eye_server.pyで指定したポート番号と同じものを指定する。)
 CTRL_SERVER_PORT = 35000
 
 #瞳の画像のファイルパス

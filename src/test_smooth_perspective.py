@@ -10,14 +10,14 @@ date    : 2022/4/23
 import time
 
 #ライブラリからEyesControlClientクラスを読み込む
-from libs.lib_donmasu_eye import EyesControlClient
+from libs.lib_donmas_eye import EyesControlClient
 #ライブラリからPow3クラスを読み込む
 from libs.lib_curves import Pow3
 
 #127.0.0.1はローカルループバック用のIPアドレス。
 #(LANを挟んだサーバーと通信する場合はサーバーのあるデバイスのIPアドレスを指定する。)
 IP = '127.0.0.1'
-#使用するネットワーク上のポート番号(donmasu_eye_server.pyで指定したポート番号と同じものを指定する。)
+#使用するネットワーク上のポート番号(donmas_eye_server.pyで指定したポート番号と同じものを指定する。)
 PORT = 35000
 
 #コントロールクライアントのクラスオブジェクトを宣言(ここでアドレスとポートを引数として渡す。)
