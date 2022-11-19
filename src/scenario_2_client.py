@@ -39,6 +39,20 @@ SCENARIO_SERVER_PORT = TARGET_PORT
 #接続先のポート番号(donmasu_eye_server.pyで指定したポート番号と同じものを指定する。)
 CTRL_SERVER_PORT = 35000
 
+#瞳の画像のファイルパス
+PUPIL_R_FILE_PATHS =[
+    'img/pupil_smile_right.png',
+    'img/pupil_fire_fast.gif',
+    'img/pupil_dame_right.png',
+    'img/pupil_akire_right.png'
+]
+PUPIL_L_FILE_PATHS =[
+    'img/pupil_smile_left.png',
+    'img/pupil_fire_fast.gif',
+    'img/pupil_dame_left.png',
+    'img/pupil_akire_left.png'
+]
+
 # シナリオサーバーとEyeCntrolServerの間をつなぐクラス
 '''
 コマンドの例
@@ -51,7 +65,7 @@ EYDMRPC1T35
 EYDMRPC2M11
 '''
 class Scenario2Server:
-    def __init__(self, ctrl_server_addr, scenario_addr=['127.0.0.1', 22], timeout=10):
+    def __init__(self, ctrl_server_addr, r_paths, l_paths, scenario_addr=['127.0.0.1', 22], timeout=10):
 
         self.all_pattern = re.compile('EYDMRP(C\d+)(.*)')
         self.all_pattern_ex = re.compile('EYDMRP([^0-9\t\n\r\f\v]+)')
@@ -63,6 +77,8 @@ class Scenario2Server:
         self._is_alive_ = True
         self.init_socket_(scenario_addr[0], scenario_addr[1], timeout)
         self.client_ = EyesControlClient(ctrl_server_addr[0], ctrl_server_addr[1])
+
+        self.client_.add_modes(r_paths, l_paths)
 
     def __del__(self):
         self.kill_process()
@@ -276,11 +292,13 @@ class Scenario2Server:
         print('Close connection.')
         conn.close()
 
-ss = Scenario2Server([CTRL_SERVER_IP, CTRL_SERVER_PORT], [SCENARIO_SERVER_IP, SCENARIO_SERVER_PORT])
+ss = Scenario2Server(
+    [CTRL_SERVER_IP, CTRL_SERVER_PORT],
+    PUPIL_R_FILE_PATHS,
+    PUPIL_L_FILE_PATHS,
+    [SCENARIO_SERVER_IP, SCENARIO_SERVER_PORT])
 
 def main():
-
-    x = y = 0
     while True:
         ss.spin_once()
         time.sleep(0.05)

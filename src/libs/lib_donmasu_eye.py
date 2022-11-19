@@ -6,14 +6,13 @@
 
 '''
 
-import os.path
+import os.path, os
 import time
 
 import cv2
 import numpy as np
 
 import random
-import time
 import copy
 
 import socket
@@ -50,7 +49,7 @@ class Eye:
         self.pupils_ = []
         self.pupils_gif_mode = []
         for pupil_path in pupil_paths:
-            root, ext = os.path.splitext(pupil_path)
+            _, ext = os.path.splitext(pupil_path)
             if ext == '.gif':
                 self.add_mode(cv2.VideoCapture(pupil_path))
             else:
@@ -132,6 +131,22 @@ class Eye:
             self.max_mr_[0] -= self.pupil_r_[0] / 2
             self.max_mr_[1] -= self.pupil_r_[1] / 2
             self.set_pos(0.5, 0.5)
+
+    def numof_mode(self):
+        '''
+        瞳のタイプの数を返す関数
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        len     : int
+            モードの数
+        '''
+
+        return len(self.pupils_)
 
     def set_pos(self, y, x):
         '''
@@ -342,23 +357,47 @@ class EyesControlServer:
         self.obj_left_ = obj_left
         self.obj_eyelid_ = obj_eyelid
 
+        self.data_id_key_ = 'id'
+
         self.x_pos_key_         = 'xpos'
         self.y_pos_key_         = 'ypos'
         self.blink_period_key_  = 'period'
         self.blink_num_key_     = 'bnum'
         self.right_mode_key_    = 'rmode'
-        self.left_mode_key_     = 'lmode'        
+        self.left_mode_key_     = 'lmode'
+
+        self.right_mode_img_key_    = 'rmodeimg'
+        self.left_mode_img_key_     = 'lmodeimg'
+        self.rl_mode_img_key_       = 'rlmodeimg'
+
+        self.mode_num_key_      = 'mode-num'
 
         self.packets = {
+            self.data_id_key_ : 0,
             self.x_pos_key_ : 0.5,
             self.y_pos_key_ : 0.5,
             self.blink_period_key_ : 3,
             self.blink_num_key_ : 2,
-            self.right_mode_key_: 0,
-            self.left_mode_key_: 0
+            self.right_mode_key_ : 0,
+            self.left_mode_key_ : 0,
+
+            self.right_mode_img_key_ : '',
+            self.left_mode_img_key_ : '',
+            self.rl_mode_img_key_ : ''
+        }
+
+        self.resp_packet_ = {
+            self.data_id_key_ : 0,
+            self.mode_num_key_ : self.obj_right_.numof_mode(),
+            'len' : 0
         }
 
         self.mutex_ = threading.Lock()
+
+        try:
+            os.makedirs('tmp_img/')
+        except FileExistsError:
+            pass
 
         self.set_pos_()
         self.set_interval_()
@@ -411,6 +450,50 @@ class EyesControlServer:
         self.server_.close()
         self.th_.join()
         
+    def add_mode_(self, is_single_img):
+
+        result = False
+
+        if is_single_img:
+            f_bin = self.packets[self.rl_mode_img_key_]
+            f = open('tmp_img/'+f_bin['name'], 'wb')
+
+            f.write(f_bin['bin'])
+
+            f.close()
+
+            _, ext = os.path.splitext('tmp_img/'+f_bin['name'])
+            if ext == '.gif':
+                result |= self.obj_right_.add_mode(cv2.VideoCapture('tmp_img/'+f_bin['name']))
+                result |= self.obj_left_.add_mode(cv2.VideoCapture('tmp_img/'+f_bin['name']))
+            else:
+                result |= self.obj_right_.add_mode(cv2.imread('tmp_img/'+f_bin['name'], cv2.IMREAD_COLOR))
+                result |= self.obj_left_.add_mode(cv2.imread('tmp_img/'+f_bin['name'], cv2.IMREAD_COLOR))
+        else:    
+            rf_bin = self.packets[self.right_mode_img_key_]
+            lf_bin = self.packets[self.left_mode_img_key_]
+            rf = open('tmp_img/'+rf_bin['name'], 'wb')
+            lf = open('tmp_img/'+lf_bin['name'], 'wb')
+
+            rf.write(rf_bin['bin'])
+            lf.write(lf_bin['bin'])
+
+            rf.close()
+            lf.close()
+
+            _, ext = os.path.splitext('tmp_img/'+rf_bin['name'])
+            if ext == '.gif':
+                result |= self.obj_right_.add_mode(cv2.VideoCapture('tmp_img/'+rf_bin['name']))
+            else:
+                result |= self.obj_right_.add_mode(cv2.imread('tmp_img/'+rf_bin['name'], cv2.IMREAD_COLOR))
+
+            _, ext = os.path.splitext('tmp_img/'+lf_bin['name'])
+            if ext == '.gif':
+                result |= self.obj_left_.add_mode(cv2.VideoCapture('tmp_img/'+lf_bin['name']))
+            else:
+                result |= self.obj_left_.add_mode(cv2.imread('tmp_img/'+lf_bin['name'], cv2.IMREAD_COLOR))
+        if result:
+            print('add mode!!')
 
     def set_pos_(self):
         y = self.packets[self.y_pos_key_]
@@ -456,13 +539,19 @@ class EyesControlServer:
     def on_process_(self, conn):
         while True:
             try:
-                data = conn.recv(512)
+                data = conn.recv(65536)
             except InterruptedError:
                 break
 
             if len(data) != 0:
-                dict = pickle.loads(data)
+                dict = pickle.loads(data, fix_imports=True, encoding="bytes")
                 self.mutex_.acquire()
+
+                if self.data_id_key_ in dict:
+                    self.resp_packet_[self.data_id_key_] = dict[self.data_id_key_]
+                    self.resp_packet_[self.mode_num_key_] = self.obj_right_.numof_mode()
+                    self.resp_packet_['len'] = len(data)
+
                 if self.y_pos_key_ in dict and self.x_pos_key_ in dict:
                     self.packets[self.y_pos_key_] = dict[self.y_pos_key_]
                     self.packets[self.x_pos_key_] = dict[self.x_pos_key_]
@@ -477,9 +566,19 @@ class EyesControlServer:
                     self.packets[self.right_mode_key_] = dict[self.right_mode_key_]
                     self.packets[self.left_mode_key_] = dict[self.left_mode_key_]
                     self.set_mode_()
+
+                if self.right_mode_img_key_ in dict and self.left_mode_img_key_ in dict:
+                    self.packets[self.right_mode_img_key_] = dict[self.right_mode_img_key_]
+                    self.packets[self.left_mode_img_key_] = dict[self.left_mode_img_key_]
+                    self.add_mode_(False)
+
+                elif self.rl_mode_img_key_ in dict:
+                    self.packets[self.rl_mode_img_key_] = dict[self.rl_mode_img_key_]
+                    self.add_mode_(True)
+
                 self.mutex_.release()
-                print('Data received!\n  data: {0}\n'.format(dict))
-                conn.send(data)
+                print('Data received!\n  keys: {0}\n'.format(dict.keys()))
+                conn.send(pickle.dumps(self.resp_packet_, 0))
             else:
                 break
             
@@ -508,12 +607,30 @@ class EyesControlClient:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((ip, port))
 
+        self.data_id_key_       = 'id'
+
         self.x_pos_key_         = 'xpos'
         self.y_pos_key_         = 'ypos'
         self.blink_period_key_  = 'period'
         self.blink_num_key_     = 'bnum'
         self.right_mode_key_    = 'rmode'
         self.left_mode_key_     = 'lmode'
+
+        self.right_mode_img_key_    = 'rmodeimg'
+        self.left_mode_img_key_     = 'lmodeimg'
+        self.rl_mode_img_key_       = 'rlmodeimg'
+
+        self.mode_num_key_      = 'mode-num'
+
+        self.data_id_ = 0
+
+        self.resp_packet_ = {
+            self.data_id_key_ : 0,
+            self.mode_num_key_ : 0,
+            'len' : 0
+        }
+
+        self.set_pos(0.5, 0.5)
 
     def __del__(self):
         '''
@@ -593,8 +710,118 @@ class EyesControlClient:
 
         return self.send_(packets)
 
+    def add_mode(self, right_path, left_path=None):
+        '''
+        瞳の画像(またはgif画像)をサーバーに送信する関数
+
+        Parameters
+        ----------
+        right_path  : str
+            右目の画像ファイルパス
+
+        left_path   : str
+            左目の画像ファイルパス(未指定なら両目とも同じ画像で登録)
+        
+        Returns
+        -------
+        result  : int
+            書き込んだバイト数 [bytes]
+        '''
+        if left_path is None or (right_path == left_path):
+            _, f_name = os.path.split(right_path)
+
+            f = open(right_path, 'rb')
+
+            f_data = {'name' : f_name, 'bin' : f.read()}
+            packets = {
+                self.rl_mode_img_key_: f_data
+            }
+
+            f.close()
+        else:
+            _, rf_name = os.path.split(right_path)
+            _, lf_name = os.path.split(left_path)
+
+            rf = open(right_path, 'rb')
+            lf = open(left_path, 'rb')
+
+            rf_data = {'name' : rf_name, 'bin' : rf.read()}
+            lf_data = {'name' : lf_name, 'bin' : lf.read()}
+            packets = {
+                self.right_mode_img_key_: rf_data,
+                self.left_mode_img_key_: lf_data
+            }
+
+            rf.close()
+            lf.close()
+
+        return self.send_(packets)
+
+    def add_modes(self, right_paths, left_paths):
+        '''
+        瞳の画像(またはgif画像)リストをサーバーに送信する関数
+
+        Parameters
+        ----------
+        right_paths  : [str,...]
+            右目の画像ファイルパスのリスト
+
+        left_paths   : [str,...]
+            左目の画像ファイルパスのリスト
+        
+        Returns
+        -------
+        None
+        '''
+        for (r, l) in zip(right_paths, left_paths):
+            self.add_mode(r, l)
+
+    def numof_mode(self, sync=True):
+        '''
+        サーバーから現在使用できる瞳モードの数を取得する関数
+
+        Parameters
+        ----------
+        sync    : bool
+            サーバーからのレスポンスを更新するかどうか
+        Returns
+        -------
+        mode_num    : int
+            サーバーに登録されている瞳モードの数
+        '''
+        if sync:
+            self.get_response()
+        return self.resp_packet_[self.mode_num_key_]
+
+    def get_response(self):
+        '''
+        サーバーからレスポンスを取得する関数
+
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        data : dict
+            サーバーからのレスポンス
+        '''
+        data = self.client.recv(1024)
+        dict = pickle.loads(data)
+
+        self.resp_packet_[self.data_id_key_] = dict[self.data_id_key_]
+        self.resp_packet_[self.mode_num_key_] = dict[self.mode_num_key_]
+        self.resp_packet_['len'] = dict['len']
+
+        if len(data) != 0:
+            return dict
+        else:
+            return None
+
     def send_(self, packets):
-        serial_packets = pickle.dumps(packets)
+        packets[self.data_id_key_] = self.data_id_
+        serial_packets = pickle.dumps(packets, 0)
         result = self.client.send(serial_packets)
         time.sleep(0.01)
+        self.data_id_ += 1
         return result

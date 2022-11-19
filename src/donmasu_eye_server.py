@@ -32,20 +32,12 @@ WIDTH = HALF_WIDTH*2
 #gif映像のどちらを使うか(True:遅い, False:速い)
 EYELID_SLOW_MODE = True
 
-#瞳の画像のファイルパス
+#初期の瞳の画像のファイルパス
 PUPIL_R_FILE_PATHS =[
-    'img/pupil_normal_right.png',
-    'img/pupil_smile_right.png',
-    'img/pupil_fire_fast.gif',
-    'img/pupil_dame_right.png',
-    'img/pupil_akire_right.png'
+    'img/pupil_normal_right.png'
 ]
 PUPIL_L_FILE_PATHS =[
-    'img/pupil_normal_left.png',
-    'img/pupil_smile_left.png',
-    'img/pupil_fire_fast.gif',
-    'img/pupil_dame_left.png',
-    'img/pupil_akire_left.png'
+    'img/pupil_normal_left.png'
 ]
 
 #まぶたの映像とそれに対応するマスク映像のファイルパス
