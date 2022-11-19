@@ -61,8 +61,8 @@ class Eye:
         self.min_r_ = min_range
         self.max_r_ = max_range
 
-        self.p_org_px_ = (0, 0)
-        self.p_n_px_ = (0, 0)
+        self.p_pos_ = (0.0, 0.0)
+        self.p_noise_ = (0, 0)
 
         self.cos_th = np.cos(th/180*np.pi)
         self.sin_th = np.sin(th/180*np.pi)
@@ -152,14 +152,9 @@ class Eye:
         rot_x = (x-0.5)*self.cos_th - (y-0.5)*self.sin_th + 0.5
         rot_y = (x-0.5)*self.sin_th + (y-0.5)*self.cos_th + 0.5
 
-        np.clip(rot_y, 0.0, 1.0)
-        np.clip(rot_x, 0.0, 1.0)
+        self.p_pos_ = (rot_x, rot_y)
 
-        px_pos = (  (self.max_mr_[0] - self.min_mr_[0]) * rot_y + self.min_mr_[0],
-                    (self.max_mr_[1] - self.min_mr_[1]) * rot_x + self.min_mr_[1])
-        self.p_org_px_ = (int(px_pos[0]-self.pupil_r_[0]/2), int(px_pos[1]-self.pupil_r_[1]/2))
-
-    def spin_once(self, src, noise_px_range=2, noise_sec=1.0):
+    def spin_once(self, src, noise_range=0.001, noise_sec=1.0):
         '''
         瞳を描写する関数
 
@@ -167,8 +162,8 @@ class Eye:
         ----------
         src     : ndarray
             入力する画像
-        noise_px_range : int
-            眼の座標振れ幅
+        noise_range : float
+            眼の振れ幅
         noise_sec : float
             瞳の座標振れ間隔
 
@@ -181,11 +176,28 @@ class Eye:
         dst = copy.copy(src)
 
         if((time.time()-self.last_n_tim_) > noise_sec):
-            self.p_n_px_ = [    
-                random.randint(0, noise_px_range),
-                random.randint(0, noise_px_range)
+            self.p_noise_ = [    
+                random.uniform(-noise_range, noise_range),
+                random.uniform(-noise_range, noise_range)
             ]
             self.last_n_tim_ = time.time()
+
+        p_pos_h = np.clip(self.p_pos_[1]+self.p_noise_[1], 0.0, 1.0)
+        p_pos_w = np.clip(self.p_pos_[0]+self.p_noise_[0], 0.0, 1.0)
+
+        px_org = (
+            (self.max_mr_[0]-self.min_mr_[0])*p_pos_h+self.min_mr_[0]-self.pupil_r_[0]/2,
+            (self.max_mr_[1]-self.min_mr_[1])*p_pos_w+self.min_mr_[1]-self.pupil_r_[1]/2
+        )
+
+        p_pxh = [
+            int(px_org[0]), 
+            int(px_org[0])+self.pupil_r_[0]
+        ]
+        p_pxw = [
+            int(px_org[1]),
+            int(px_org[1])+self.pupil_r_[1]
+        ]
 
         if self.pupil_gif_mode:
 
@@ -202,16 +214,9 @@ class Eye:
                 ret, img = self.pupil_.retrieve()
 
             if ret:
-                dst[(self.p_org_px_[0]+self.p_n_px_[0]):
-                    (self.p_org_px_[0]+self.p_n_px_[0])+self.pupil_r_[0], 
-                    (self.p_org_px_[1]+self.p_n_px_[1]):
-                    (self.p_org_px_[1]+self.p_n_px_[1])+self.pupil_r_[1]] = img
-
+                dst[p_pxh[0]:p_pxh[1], p_pxw[0]:p_pxw[1]] = img
         else:
-            dst[(self.p_org_px_[0]+self.p_n_px_[0]):
-                (self.p_org_px_[0]+self.p_n_px_[0])+self.pupil_r_[0], 
-                (self.p_org_px_[1]+self.p_n_px_[1]):
-                (self.p_org_px_[1]+self.p_n_px_[1])+self.pupil_r_[1]] = self.pupil_
+            dst[p_pxh[0]:p_pxh[1], p_pxw[0]:p_pxw[1]] = self.pupil_
  
         return dst
 
