@@ -70,8 +70,8 @@ class Scenario2Server:
     def spin_once(self):
         x, xrlt = self.linear_x.get_out()
         y, yrlt = self.linear_y.get_out()
-
-        self.client_.set_pos(x, y)
+        if not (xrlt and yrlt):
+            self.client_.set_pos(x, y)
 
         return (xrlt and yrlt)
 
