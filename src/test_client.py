@@ -82,7 +82,7 @@ def main():
                 print('Result : ', client.get_response())
                 #無遅延だと速すぎるので50ms待つ
                 time.sleep(0.05)
-                x += 0.01
+                x += 0.1
             #横方向に最大まで動くと縦方向に動く
             x = 0
             y += 0.1
