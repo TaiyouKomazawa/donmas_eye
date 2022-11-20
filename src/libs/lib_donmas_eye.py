@@ -18,6 +18,7 @@ import random
 import copy
 
 import socket
+import struct
 import pickle
 
 import threading
@@ -90,6 +91,9 @@ class Eye:
         '''
 
         rlt = 0
+
+        self.change_mode(0)
+
         if mode_id >= self.numof_mode() or mode_id < 0:
             if type(img) is cv2.VideoCapture:
                 self.pupils_.append(img)
@@ -546,8 +550,11 @@ class EyesControlServer:
     def init_socket_(self, ip, port, timeout=10):
         self.server_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_.bind((ip, port))
-        self.server_.settimeout(timeout)
+        #self.server_.settimeout(timeout)
         self.server_.listen(2)
+
+        self.payload_sz_ = struct.calcsize('>L')
+        self.data_ = b''
 
         self.th_ = threading.Thread(target=self.on_host_waiting_)
         self.th_.start()
@@ -567,53 +574,68 @@ class EyesControlServer:
             if self._is_alive_ == False:
                 break
 
+    def send_(self, conn, packets):
+        serial_packets = pickle.dumps(packets, 0)
+        data = struct.pack('>L', len(serial_packets)) + serial_packets
+        result = conn.send(data)
+        return result
+
+    def receive_(self, conn):
+        while len(self.data_) <= self.payload_sz_:
+            self.data_ += conn.recvfrom(127)[0]
+        packed_msg_sz = self.data_[:self.payload_sz_]
+        self.data_ = self.data_[self.payload_sz_:]
+        msg_sz = struct.unpack('>L', packed_msg_sz)[0]
+
+        while len(self.data_) <= msg_sz:
+            self.data_ += conn.recvfrom(127)[0]
+
+        r_dict = pickle.loads(self.data_[:msg_sz], fix_imports=True, encoding='bytes')
+        self.data_ = self.data_[msg_sz:]
+
+        return r_dict
+
     def on_process_(self, conn):
         while True:
-            try:
-                data = conn.recv(65536)
-            except InterruptedError:
-                break
+            r_dict = self.receive_(conn)
 
-            if len(data) != 0:
-                dict = pickle.loads(data, fix_imports=True, encoding="bytes")
+            if len(r_dict.keys()) != 0:
                 self.mutex_.acquire()
 
-                if self.data_id_key_ in dict:
-                    self.resp_packet_[self.data_id_key_] = dict[self.data_id_key_]
+                if self.data_id_key_ in r_dict:
+                    self.resp_packet_[self.data_id_key_] = r_dict[self.data_id_key_]
                     self.resp_packet_[self.mode_num_key_] = self.obj_right_.numof_mode()
-                    self.resp_packet_['len'] = len(data)
+                    self.resp_packet_['len'] = len(self.data_)
 
-                if self.y_pos_key_ in dict and self.x_pos_key_ in dict:
-                    self.packets[self.y_pos_key_] = dict[self.y_pos_key_]
-                    self.packets[self.x_pos_key_] = dict[self.x_pos_key_]
+                if self.y_pos_key_ in r_dict and self.x_pos_key_ in r_dict:
+                    self.packets[self.y_pos_key_] = r_dict[self.y_pos_key_]
+                    self.packets[self.x_pos_key_] = r_dict[self.x_pos_key_]
                     self.set_pos_()
 
-                if self.blink_period_key_ in dict and self.blink_num_key_ in dict:
-                    self.packets[self.blink_period_key_] = dict[self.blink_period_key_]
-                    self.packets[self.blink_num_key_] = dict[self.blink_num_key_]
+                if self.blink_period_key_ in r_dict and self.blink_num_key_ in r_dict:
+                    self.packets[self.blink_period_key_] = r_dict[self.blink_period_key_]
+                    self.packets[self.blink_num_key_] = r_dict[self.blink_num_key_]
                     self.set_interval_()
                 
-                if self.right_mode_key_ in dict and self.left_mode_key_ in dict:
-                    self.packets[self.right_mode_key_] = dict[self.right_mode_key_]
-                    self.packets[self.left_mode_key_] = dict[self.left_mode_key_]
+                if self.right_mode_key_ in r_dict and self.left_mode_key_ in r_dict:
+                    self.packets[self.right_mode_key_] = r_dict[self.right_mode_key_]
+                    self.packets[self.left_mode_key_] = r_dict[self.left_mode_key_]
                     self.set_mode_()
 
-                if self.right_mode_img_key_ in dict and self.left_mode_img_key_ in dict:
-                    self.packets[self.right_mode_img_key_] = dict[self.right_mode_img_key_]
-                    self.packets[self.left_mode_img_key_] = dict[self.left_mode_img_key_]
-                    self.packets[self.mode_id_key_] = dict[self.mode_id_key_]
+                if self.right_mode_img_key_ in r_dict and self.left_mode_img_key_ in r_dict:
+                    self.packets[self.right_mode_img_key_] = r_dict[self.right_mode_img_key_]
+                    self.packets[self.left_mode_img_key_] = r_dict[self.left_mode_img_key_]
+                    self.packets[self.mode_id_key_] = r_dict[self.mode_id_key_]
                     self.add_mode_(False)
 
-                elif self.rl_mode_img_key_ in dict:
-                    self.packets[self.rl_mode_img_key_] = dict[self.rl_mode_img_key_]
-                    self.packets[self.mode_id_key_] = dict[self.mode_id_key_]
+                elif self.rl_mode_img_key_ in r_dict:
+                    self.packets[self.rl_mode_img_key_] = r_dict[self.rl_mode_img_key_]
+                    self.packets[self.mode_id_key_] = r_dict[self.mode_id_key_]
                     self.add_mode_(True)
 
                 self.mutex_.release()
-                print('Data received!\n  keys: {0}\n'.format(dict.keys()))
-                conn.send(pickle.dumps(self.resp_packet_, 0))
-            else:
-                break
+                self.send_(conn, self.resp_packet_)
+                print('Data received!\n  keys: {0}\n'.format(r_dict.keys()))
             
             if self._is_alive_ == False:
                 break
@@ -660,6 +682,9 @@ class EyesControlClient:
         self.mode_bin_key_      = 'bin'
 
         self.data_id_ = 0
+
+        self.data_ = b''
+        self.payload_sz_ = struct.calcsize('>L')
 
         self.resp_packet_ = {
             self.data_id_key_ : 0,
@@ -872,26 +897,40 @@ class EyesControlClient:
         
         Returns
         -------
-        data : dict
+        data : r_dict
             サーバーからのレスポンス
         '''
 
-        data = self.client.recv(1024)
-        dict = pickle.loads(data)
+        r_dict = self.receive_()
 
-        self.resp_packet_[self.data_id_key_] = dict[self.data_id_key_]
-        self.resp_packet_[self.mode_num_key_] = dict[self.mode_num_key_]
-        self.resp_packet_['len'] = dict['len']
-
-        if len(data) != 0:
-            return dict
+        if len(r_dict.keys()) >= 3:
+            self.resp_packet_[self.data_id_key_] = r_dict[self.data_id_key_]
+            self.resp_packet_[self.mode_num_key_] = r_dict[self.mode_num_key_]
+            self.resp_packet_['len'] = r_dict['len']
+            return r_dict
         else:
             return None
 
     def send_(self, packets):
         packets[self.data_id_key_] = self.data_id_
         serial_packets = pickle.dumps(packets, 0)
-        result = self.client.send(serial_packets)
+        data = struct.pack('>L', len(serial_packets)) + serial_packets
+        result = self.client.send(data)
         time.sleep(0.01)
         self.data_id_ += 1
         return result
+
+    def receive_(self):
+        while len(self.data_) <= self.payload_sz_:
+            self.data_ += self.client.recv(127)
+        packed_msg_sz = self.data_[:self.payload_sz_]
+        self.data_ = self.data_[self.payload_sz_:]
+        msg_sz = struct.unpack('>L', packed_msg_sz)[0]
+
+        while len(self.data_) <= msg_sz:
+            self.data_ += self.client.recv(127)
+
+        r_dict = pickle.loads(self.data_[:msg_sz], fix_imports=True, encoding='bytes')
+        self.data_ = self.data_[msg_sz:]
+
+        return r_dict
