@@ -4,6 +4,8 @@
 ドンマス-アイの動作に必要なクラスを定義してある。
 使いたいときは本スクリプトをimportする。
 
+author  : Taiyou Komazawa
+date    : 2022/4/23
 '''
 
 import os.path, os
@@ -44,6 +46,7 @@ class Eye:
         th  : float
             眼の固定角度(度)
         '''
+
         self.bg_ = bg
         
         self.pupils_ = []
@@ -85,8 +88,8 @@ class Eye:
         rlt     :   int
             追加・上書きされたモードID, 失敗した場合-1を返す
         '''
-        rlt = 0
 
+        rlt = 0
         if mode_id >= self.numof_mode() or mode_id < 0:
             if type(img) is cv2.VideoCapture:
                 self.pupils_.append(img)
@@ -264,6 +267,7 @@ class EyeLid:
         eyelid_mask : cv2.VideoCapture class object
             まぶたのgif映像のマスク
         '''
+
         self.eyelid_ = eyelid_cap
         self.eyelid_mask_ = eyelid_mask
         self.last_lid_time = time.time()
@@ -293,6 +297,7 @@ class EyeLid:
         -------
         None
         '''
+
         self.lid_sec_ = sec
         self.lid_loop_ = loop
         self.lid_scat_ = scat_sec
@@ -314,6 +319,7 @@ class EyeLid:
         dst     : ndarray
             出力画像。瞬きの待ち時間であれば入力画像がそのまま返却される
         '''
+
         if self.lid_loop_ <= 0:
             self.last_lid_time = time.time()
             return src
@@ -428,6 +434,7 @@ class EyesControlServer:
         '''
         クラスデストラクタ
         '''
+
         self.kill_process()
 
     def get_image(self):
@@ -666,6 +673,7 @@ class EyesControlClient:
         '''
         クラスデストラクタ
         '''
+
         self.client.close()
 
     def set_pos(self, x, y):
@@ -685,6 +693,7 @@ class EyesControlClient:
         result  : int
             書き込んだバイト数 [bytes]
         '''
+
         packets = {
             self.x_pos_key_ : x,
             self.y_pos_key_ : y
@@ -709,6 +718,7 @@ class EyesControlClient:
         result  : int
             書き込んだバイト数 [bytes]
         '''
+
         packets = {
             self.blink_period_key_  : period,
             self.blink_num_key_     : loop_num
@@ -733,6 +743,7 @@ class EyesControlClient:
         result  : int
             書き込んだバイト数 [bytes]
         '''
+
         packets = {
             self.right_mode_key_    : r_mode_id,
             self.left_mode_key_     : l_mode_id
@@ -760,6 +771,7 @@ class EyesControlClient:
         result  : int
             書き込んだバイト数 [bytes]
         '''
+
         if left_path is None or (right_path == left_path):
             _, f_name = os.path.split(right_path)
 
@@ -839,11 +851,13 @@ class EyesControlClient:
         ----------
         sync    : bool
             サーバーからのレスポンスを更新するかどうか
+
         Returns
         -------
         mode_num    : int
             サーバーに登録されている瞳モードの数
         '''
+
         if sync:
             self.get_response()
         return self.resp_packet_[self.mode_num_key_]
@@ -861,6 +875,7 @@ class EyesControlClient:
         data : dict
             サーバーからのレスポンス
         '''
+
         data = self.client.recv(1024)
         dict = pickle.loads(data)
 
