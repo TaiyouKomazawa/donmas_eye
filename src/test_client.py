@@ -40,7 +40,7 @@ PUPIL_L_FILE_PATHS =[
 ]
 
 def main():
-    client.add_modes(PUPIL_R_FILE_PATHS, PUPIL_L_FILE_PATHS)
+    client.add_modes(PUPIL_R_FILE_PATHS, PUPIL_L_FILE_PATHS, 1)
     time.sleep(0.1)
 
     #瞬きの間隔を3.5秒間隔にする。
@@ -50,8 +50,6 @@ def main():
     #瞳のモードをセット(右:通常の瞳(0), 左:通常の瞳(0))
     client.set_mode(0, 0)
 
-    print('mode num : ', client.numof_mode())
-
     x = y = 0.5
     while True:
         #まばたき停止
@@ -59,14 +57,19 @@ def main():
 
         #表情を変更
         client.set_mode(1, 1)
+        print('Result : ', client.get_response())
         time.sleep(3)
         client.set_mode(2, 2)
+        print('Result : ', client.get_response())
         time.sleep(3)
         client.set_mode(3, 3)
+        print('Result : ', client.get_response())
         time.sleep(3)
         client.set_mode(4, 4)
+        print('Result : ', client.get_response())
         time.sleep(3)
         client.set_mode(0, 0)
+        print('Result : ', client.get_response())
         
         #まばたき再開
         client.set_blink_interval(3.5)

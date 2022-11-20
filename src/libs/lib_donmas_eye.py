@@ -47,7 +47,7 @@ class Eye:
         self.bg_ = bg
         
         self.pupils_ = []
-        self.pupils_gif_mode = []
+        self.pupils_gif_mode_ = []
         for pupil_path in pupil_paths:
             _, ext = os.path.splitext(pupil_path)
             if ext == '.gif':
@@ -69,52 +69,66 @@ class Eye:
         self.change_mode(0)
         self.last_n_tim_ = time.time()
 
-    def add_mode(self, img):
+    def add_mode(self, img, mode_id=-1):
         '''
-        瞳のタイプを追加する関数
+        瞳のタイプを追加(すでにある場合は上書き)する関数
 
         Parameters
         ----------
         img     :   ndarray or cv2.VideoCapture
             瞳の画像(またはgif映像)
+        mode_id :   int
+            追加する瞳の表情モード(負値で最後尾に追加)
 
         Returns
         -------
-        rlt     :   bool
-            追加が成功したかどうか(True : 成功)
+        rlt     :   int
+            追加・上書きされたモードID, 失敗した場合-1を返す
         '''
-        rlt = False
+        rlt = 0
 
-        if type(img) is cv2.VideoCapture:
-            self.pupils_.append(img)
-            self.pupils_gif_mode.append(True)
-            rlt = True
-        elif type(img) is np.ndarray:
-            self.pupils_.append(img)
-            self.pupils_gif_mode.append(False)
-            rlt = True
-        else:
-            pass
+        if mode_id >= self.numof_mode() or mode_id < 0:
+            if type(img) is cv2.VideoCapture:
+                self.pupils_.append(img)
+                self.pupils_gif_mode_.append(True)
+                rlt = self.numof_mode() - 1
+            elif type(img) is np.ndarray:
+                self.pupils_.append(img)
+                self.pupils_gif_mode_.append(False)
+                rlt = self.numof_mode() - 1
+            else:
+                rlt = -1
+        elif mode_id < self.numof_mode():
+            if type(img) is cv2.VideoCapture:
+                self.pupils_[mode_id] = img
+                self.pupils_gif_mode_[mode_id] = True
+                rlt = mode_id
+            elif type(img) is np.ndarray:
+                self.pupils_[mode_id] = img
+                self.pupils_gif_mode_[mode_id] = False
+                rlt = mode_id
+            else:
+                rlt = -1
 
         return rlt
 
-    def change_mode(self, mode):
+    def change_mode(self, mode_id):
         '''
         瞳のタイプを変更する関数
 
         Parameters
         ----------
-        mode    : int
-            瞳の画像の種類(0から読み込んだ画像順で指定可能)
+        mode_id    : int
+            瞳の表情モード
 
         Returns
         -------
         None
         '''
 
-        if mode < len(self.pupils_):
-            self.pupil_ = self.pupils_[mode]
-            self.pupil_gif_mode = self.pupils_gif_mode[mode]
+        if mode_id < len(self.pupils_):
+            self.pupil_ = self.pupils_[mode_id]
+            self.pupil_gif_mode = self.pupils_gif_mode_[mode_id]
 
             if self.pupil_gif_mode:
                 self.pupil_r_ = [int(self.pupil_.get(cv2.CAP_PROP_FRAME_HEIGHT)), 
@@ -143,7 +157,7 @@ class Eye:
         Returns
         -------
         len     : int
-            モードの数
+            瞳の表情モードの数
         '''
 
         return len(self.pupils_)
@@ -369,8 +383,12 @@ class EyesControlServer:
         self.right_mode_img_key_    = 'rmodeimg'
         self.left_mode_img_key_     = 'lmodeimg'
         self.rl_mode_img_key_       = 'rlmodeimg'
+        self.mode_id_key_           = 'mode-id'
 
         self.mode_num_key_      = 'mode-num'
+
+        self.mode_fname_key_    = 'fname'
+        self.mode_bin_key_      = 'bin'
 
         self.packets = {
             self.data_id_key_ : 0,
@@ -383,7 +401,8 @@ class EyesControlServer:
 
             self.right_mode_img_key_ : '',
             self.left_mode_img_key_ : '',
-            self.rl_mode_img_key_ : ''
+            self.rl_mode_img_key_ : '',
+            self.mode_id_key_     : -1
         }
 
         self.resp_packet_ = {
@@ -456,44 +475,49 @@ class EyesControlServer:
 
         if is_single_img:
             f_bin = self.packets[self.rl_mode_img_key_]
-            f = open('tmp_img/'+f_bin['name'], 'wb')
+            mode_id = self.packets[self.mode_id_key_]
 
-            f.write(f_bin['bin'])
+            fpath = 'tmp_img/'+f_bin[self.mode_fname_key_]
 
+            f = open(fpath, 'wb')
+            f.write(f_bin[self.mode_bin_key_])
             f.close()
 
-            _, ext = os.path.splitext('tmp_img/'+f_bin['name'])
+            _, ext = os.path.splitext(fpath)
             if ext == '.gif':
-                result |= self.obj_right_.add_mode(cv2.VideoCapture('tmp_img/'+f_bin['name']))
-                result |= self.obj_left_.add_mode(cv2.VideoCapture('tmp_img/'+f_bin['name']))
+                result |= self.obj_right_.add_mode(cv2.VideoCapture(fpath), mode_id)
+                result |= self.obj_left_.add_mode(cv2.VideoCapture(fpath), mode_id)
             else:
-                result |= self.obj_right_.add_mode(cv2.imread('tmp_img/'+f_bin['name'], cv2.IMREAD_COLOR))
-                result |= self.obj_left_.add_mode(cv2.imread('tmp_img/'+f_bin['name'], cv2.IMREAD_COLOR))
+                result |= self.obj_right_.add_mode(cv2.imread(fpath, cv2.IMREAD_COLOR), mode_id)
+                result |= self.obj_left_.add_mode(cv2.imread(fpath, cv2.IMREAD_COLOR), mode_id)
         else:    
             rf_bin = self.packets[self.right_mode_img_key_]
             lf_bin = self.packets[self.left_mode_img_key_]
-            rf = open('tmp_img/'+rf_bin['name'], 'wb')
-            lf = open('tmp_img/'+lf_bin['name'], 'wb')
+            mode_id = self.packets[self.mode_id_key_]
 
-            rf.write(rf_bin['bin'])
-            lf.write(lf_bin['bin'])
+            rfpath = 'tmp_img/'+rf_bin[self.mode_fname_key_]
+            lfpath = 'tmp_img/'+lf_bin[self.mode_fname_key_]
 
+            rf = open(rfpath, 'wb')
+            lf = open(lfpath, 'wb')
+            rf.write(rf_bin[self.mode_bin_key_])
+            lf.write(lf_bin[self.mode_bin_key_])
             rf.close()
             lf.close()
 
-            _, ext = os.path.splitext('tmp_img/'+rf_bin['name'])
+            _, ext = os.path.splitext(rfpath)
             if ext == '.gif':
-                result |= self.obj_right_.add_mode(cv2.VideoCapture('tmp_img/'+rf_bin['name']))
+                result |= self.obj_right_.add_mode(cv2.VideoCapture(rfpath), mode_id)
             else:
-                result |= self.obj_right_.add_mode(cv2.imread('tmp_img/'+rf_bin['name'], cv2.IMREAD_COLOR))
+                result |= self.obj_right_.add_mode(cv2.imread(rfpath, cv2.IMREAD_COLOR), mode_id)
 
-            _, ext = os.path.splitext('tmp_img/'+lf_bin['name'])
+            _, ext = os.path.splitext(lfpath)
             if ext == '.gif':
-                result |= self.obj_left_.add_mode(cv2.VideoCapture('tmp_img/'+lf_bin['name']))
+                result |= self.obj_left_.add_mode(cv2.VideoCapture(lfpath), mode_id)
             else:
-                result |= self.obj_left_.add_mode(cv2.imread('tmp_img/'+lf_bin['name'], cv2.IMREAD_COLOR))
+                result |= self.obj_left_.add_mode(cv2.imread(lfpath, cv2.IMREAD_COLOR), mode_id)
         if result:
-            print('add mode!!')
+            print('Add mode!!')
 
     def set_pos_(self):
         y = self.packets[self.y_pos_key_]
@@ -570,10 +594,12 @@ class EyesControlServer:
                 if self.right_mode_img_key_ in dict and self.left_mode_img_key_ in dict:
                     self.packets[self.right_mode_img_key_] = dict[self.right_mode_img_key_]
                     self.packets[self.left_mode_img_key_] = dict[self.left_mode_img_key_]
+                    self.packets[self.mode_id_key_] = dict[self.mode_id_key_]
                     self.add_mode_(False)
 
                 elif self.rl_mode_img_key_ in dict:
                     self.packets[self.rl_mode_img_key_] = dict[self.rl_mode_img_key_]
+                    self.packets[self.mode_id_key_] = dict[self.mode_id_key_]
                     self.add_mode_(True)
 
                 self.mutex_.release()
@@ -619,8 +645,12 @@ class EyesControlClient:
         self.right_mode_img_key_    = 'rmodeimg'
         self.left_mode_img_key_     = 'lmodeimg'
         self.rl_mode_img_key_       = 'rlmodeimg'
+        self.mode_id_key_           = 'mode-id'
 
         self.mode_num_key_      = 'mode-num'
+
+        self.mode_fname_key_    = 'fname'
+        self.mode_bin_key_      = 'bin'
 
         self.data_id_ = 0
 
@@ -686,16 +716,16 @@ class EyesControlClient:
 
         return self.send_(packets)
 
-    def set_mode(self, right, left):
+    def set_mode(self, r_mode_id, l_mode_id):
         '''
         瞳のモードをサーバーに送信する関数
 
         Parameters
         ----------
-        right   : int
+        r_mode_id   : int
             右の瞳のモード  
 
-        left    : int
+        l_mode_id   : int
             左の瞳のモード
         
         Returns
@@ -704,13 +734,13 @@ class EyesControlClient:
             書き込んだバイト数 [bytes]
         '''
         packets = {
-            self.right_mode_key_    : right,
-            self.left_mode_key_     : left
+            self.right_mode_key_    : r_mode_id,
+            self.left_mode_key_     : l_mode_id
         }
 
         return self.send_(packets)
 
-    def add_mode(self, right_path, left_path=None):
+    def add_mode(self, right_path, left_path=None, mode_id=-1):
         '''
         瞳の画像(またはgif画像)をサーバーに送信する関数
 
@@ -721,6 +751,9 @@ class EyesControlClient:
 
         left_path   : str
             左目の画像ファイルパス(未指定なら両目とも同じ画像で登録)
+
+        mode_id     : int
+            追加する瞳の表情モード位置(負値で最後尾に追加)
         
         Returns
         -------
@@ -732,9 +765,13 @@ class EyesControlClient:
 
             f = open(right_path, 'rb')
 
-            f_data = {'name' : f_name, 'bin' : f.read()}
+            f_data = {
+                self.mode_fname_key_    : f_name,
+                self.mode_bin_key_      : f.read(),
+            }
             packets = {
-                self.rl_mode_img_key_: f_data
+                self.rl_mode_img_key_   : f_data,
+                self.mode_id_key_       : mode_id
             }
 
             f.close()
@@ -745,11 +782,18 @@ class EyesControlClient:
             rf = open(right_path, 'rb')
             lf = open(left_path, 'rb')
 
-            rf_data = {'name' : rf_name, 'bin' : rf.read()}
-            lf_data = {'name' : lf_name, 'bin' : lf.read()}
+            rf_data = {
+                self.mode_fname_key_    : rf_name, 
+                self.mode_bin_key_      : rf.read(),
+            }
+            lf_data = {
+                self.mode_fname_key_    : lf_name,
+                self.mode_bin_key_      : lf.read(),
+            }
             packets = {
                 self.right_mode_img_key_: rf_data,
-                self.left_mode_img_key_: lf_data
+                self.left_mode_img_key_ : lf_data,
+                self.mode_id_key_       : mode_id
             }
 
             rf.close()
@@ -757,24 +801,35 @@ class EyesControlClient:
 
         return self.send_(packets)
 
-    def add_modes(self, right_paths, left_paths):
+    def add_modes(self, right_paths, left_paths, head_m_id=-1):
         '''
         瞳の画像(またはgif画像)リストをサーバーに送信する関数
 
         Parameters
         ----------
-        right_paths  : [str,...]
+        right_paths : [str,...]
             右目の画像ファイルパスのリスト
 
-        left_paths   : [str,...]
+        left_paths  : [str,...]
             左目の画像ファイルパスのリスト
+
+        head_m_id   : int
+            追加する瞳の表情モードの先頭位置(負値で最後尾から追加)
         
         Returns
         -------
         None
         '''
-        for (r, l) in zip(right_paths, left_paths):
-            self.add_mode(r, l)
+
+        if head_m_id <= -1:
+            for (r, l) in zip(right_paths, left_paths):
+                self.add_mode(r, l)
+        else:
+            i = head_m_id
+            for (r, l) in zip(right_paths, left_paths):
+                self.add_mode(r, l, i)
+                i += 1
+
 
     def numof_mode(self, sync=True):
         '''
