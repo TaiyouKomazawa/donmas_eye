@@ -78,7 +78,7 @@ class Scenario2Server:
         self.init_socket_(scenario_addr[0], scenario_addr[1], timeout)
         self.client_ = EyesControlClient(ctrl_server_addr[0], ctrl_server_addr[1])
 
-        self.client_.add_modes(r_paths, l_paths)
+        self.client_.add_modes(r_paths, l_paths, 1)
 
     def __del__(self):
         self.kill_process()
