@@ -39,7 +39,7 @@ SCENARIO_SERVER_PORT = TARGET_PORT
 #接続先のポート番号(donmas_eye_server.pyで指定したポート番号と同じものを指定する。)
 CTRL_SERVER_PORT = 35000
 
-#瞳の画像のファイルパス
+#瞳の左右の画像のファイルパス
 PUPIL_R_FILE_PATHS =[
     'img/pupil_smile_right.png',
     'img/pupil_fire_fast.gif',

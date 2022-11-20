@@ -25,7 +25,7 @@ PORT = 35000
 client = EyesControlClient(IP, PORT)
 
 
-#瞳の画像のファイルパス
+#瞳の左右画像のファイルパス
 PUPIL_R_FILE_PATHS =[
     'img/pupil_smile_right.png',
     'img/pupil_fire_fast.gif',
@@ -40,6 +40,7 @@ PUPIL_L_FILE_PATHS =[
 ]
 
 def main():
+    #使用する瞳の画像を送信(ID:0はプリセットの瞳の画像なのでID:1から上書き)
     client.add_modes(PUPIL_R_FILE_PATHS, PUPIL_L_FILE_PATHS, 1)
     time.sleep(0.1)
 
@@ -55,7 +56,7 @@ def main():
         #まばたき停止
         client.set_blink_interval(3.5, 0)
 
-        #表情を変更
+        #3秒ずつ表情を変更
         client.set_mode(1, 1)
         print('Result : ', client.get_response())
         time.sleep(3)
@@ -82,8 +83,8 @@ def main():
                 #無遅延だと速すぎるので50ms待つ
                 time.sleep(0.05)
                 x += 0.01
-            x = 0
             #横方向に最大まで動くと縦方向に動く
+            x = 0
             y += 0.1
         y = 0
         
