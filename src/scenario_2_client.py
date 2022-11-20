@@ -267,7 +267,7 @@ class Scenario2Server:
                     t = cmd_list['T'] / 10.0
                     print('Got command eyelid interval. t:{0}'.format(t))
                     self.client_.set_blink_interval(t)
-                    
+
                 elif  cmd_type == 'C2': #C2 : 表情(瞳)のモードを設定するコマンドの場合
                     cmd_list = {
                         'M' : '00' #十の位:左のモード、一の位:右のモード

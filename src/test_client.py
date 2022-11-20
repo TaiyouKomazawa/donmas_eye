@@ -71,10 +71,10 @@ def main():
         time.sleep(3)
         client.set_mode(0, 0)
         print('Result : ', client.get_response())
-        
+
         #まばたき再開
         client.set_blink_interval(3.5)
-        
+
         #黒眼を動かす
         while y <= 1.0:
             while x <= 1.0:#横方向に動く
@@ -87,7 +87,7 @@ def main():
             x = 0
             y += 0.1
         y = 0
-        
+
 
 if __name__ == '__main__':
     main()

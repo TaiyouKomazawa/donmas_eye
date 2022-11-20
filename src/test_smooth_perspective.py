@@ -31,7 +31,7 @@ fy = Pow3(0.5)
 def main():
     #瞬きの間隔を4秒間隔にする。
     client.set_blink_interval(4)
-    
+
     #増加モードからスタート
     x_adding = True
     y_adding = True
@@ -56,7 +56,7 @@ def main():
             #減少モード(現在値から0.0まで減らす)
             else:
                 fx.reset(0.0, 4)
-        
+
         #y軸側の指定していた時間が経過した場合
         if y_rlt == True:
             #モードを反転

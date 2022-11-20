@@ -49,7 +49,7 @@ class Eye:
         '''
 
         self.bg_ = bg
-        
+
         self.pupils_ = []
         self.pupils_gif_mode_ = []
         for pupil_path in pupil_paths:
@@ -138,7 +138,7 @@ class Eye:
             self.pupil_gif_mode = self.pupils_gif_mode_[mode_id]
 
             if self.pupil_gif_mode:
-                self.pupil_r_ = [int(self.pupil_.get(cv2.CAP_PROP_FRAME_HEIGHT)), 
+                self.pupil_r_ = [int(self.pupil_.get(cv2.CAP_PROP_FRAME_HEIGHT)),
                                 int(self.pupil_.get(cv2.CAP_PROP_FRAME_WIDTH))]
                 self.pupil_.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 self.last_f_tim_ = time.time()
@@ -175,10 +175,10 @@ class Eye:
 
         Parameters
         ----------
-        y   : float 
+        y   : float
             眼のy座標((縦方向のpixel数)*0.0-1.0)
 
-        x   : float 
+        x   : float
             眼のx座標((横方向のpixel数)*0.0-1.0)
         Returns
         -------
@@ -212,7 +212,7 @@ class Eye:
         dst = copy.copy(src)
 
         if((time.time()-self.last_n_tim_) > noise_sec):
-            self.p_noise_ = [    
+            self.p_noise_ = [
                 random.uniform(-noise_range, noise_range),
                 random.uniform(-noise_range, noise_range)
             ]
@@ -227,7 +227,7 @@ class Eye:
         )
 
         p_pxh = [
-            int(px_org[0]), 
+            int(px_org[0]),
             int(px_org[0])+self.pupil_r_[0]
         ]
         p_pxw = [
@@ -253,7 +253,7 @@ class Eye:
                 dst[p_pxh[0]:p_pxh[1], p_pxw[0]:p_pxw[1]] = img
         else:
             dst[p_pxh[0]:p_pxh[1], p_pxw[0]:p_pxw[1]] = self.pupil_
- 
+
         return dst
 
 #まぶた(瞬き)のアニメーションを定義するクラス
@@ -293,10 +293,10 @@ class EyeLid:
 
         loop    : int
             1回の瞬きにおけるまぶたを閉じる回数[回]
-        
+
         scat_sec: float
             瞬きの間隔の散乱具合[sec]
-        
+
         Returns
         -------
         None
@@ -328,7 +328,7 @@ class EyeLid:
             self.last_lid_time = time.time()
             return src
 
-        if (time.time() - self.last_lid_time) > (self.lid_sec_+self.lid_ex_sec_): 
+        if (time.time() - self.last_lid_time) > (self.lid_sec_+self.lid_ex_sec_):
             ret_m, mask = self.eyelid_mask_.read()
             ret, frame = self.eyelid_.read()
 
@@ -479,7 +479,7 @@ class EyesControlServer:
         self._is_alive_ = False
         self.server_.close()
         self.th_.join()
-        
+
     def add_mode_(self, is_single_img):
 
         result = False
@@ -501,7 +501,7 @@ class EyesControlServer:
             else:
                 result |= self.obj_right_.add_mode(cv2.imread(fpath, cv2.IMREAD_COLOR), mode_id)
                 result |= self.obj_left_.add_mode(cv2.imread(fpath, cv2.IMREAD_COLOR), mode_id)
-        else:    
+        else:
             rf_bin = self.packets[self.right_mode_img_key_]
             lf_bin = self.packets[self.left_mode_img_key_]
             mode_id = self.packets[self.mode_id_key_]
@@ -616,7 +616,7 @@ class EyesControlServer:
                     self.packets[self.blink_period_key_] = r_dict[self.blink_period_key_]
                     self.packets[self.blink_num_key_] = r_dict[self.blink_num_key_]
                     self.set_interval_()
-                
+
                 if self.right_mode_key_ in r_dict and self.left_mode_key_ in r_dict:
                     self.packets[self.right_mode_key_] = r_dict[self.right_mode_key_]
                     self.packets[self.left_mode_key_] = r_dict[self.left_mode_key_]
@@ -636,7 +636,7 @@ class EyesControlServer:
                 self.mutex_.release()
                 self.send_(conn, self.resp_packet_)
                 print('Data received!\n  keys: {0}\n'.format(r_dict.keys()))
-            
+
             if self._is_alive_ == False:
                 break
 
@@ -658,7 +658,7 @@ class EyesControlClient:
         port    : int
             接続するポート
         '''
-        
+
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((ip, port))
 
@@ -707,12 +707,12 @@ class EyesControlClient:
 
         Parameters
         ----------
-        x   : float 
+        x   : float
             眼のx座標((横方向のpixel数)*0.0-1.0)
 
-        y   : float 
+        y   : float
             眼のy座標((縦方向のpixel数)*0.0-1.0)
-        
+
         Returns
         -------
         result  : int
@@ -737,7 +737,7 @@ class EyesControlClient:
 
         loop_num    : int
             1回の瞬きにおけるまぶたを閉じる回数[回]
-        
+
         Returns
         -------
         result  : int
@@ -758,11 +758,11 @@ class EyesControlClient:
         Parameters
         ----------
         r_mode_id   : int
-            右の瞳のモード  
+            右の瞳のモード
 
         l_mode_id   : int
             左の瞳のモード
-        
+
         Returns
         -------
         result  : int
@@ -790,7 +790,7 @@ class EyesControlClient:
 
         mode_id     : int
             追加する瞳の表情モード位置(負値で最後尾に追加)
-        
+
         Returns
         -------
         result  : int
@@ -820,7 +820,7 @@ class EyesControlClient:
             lf = open(left_path, 'rb')
 
             rf_data = {
-                self.mode_fname_key_    : rf_name, 
+                self.mode_fname_key_    : rf_name,
                 self.mode_bin_key_      : rf.read(),
             }
             lf_data = {
@@ -852,7 +852,7 @@ class EyesControlClient:
 
         head_m_id   : int
             追加する瞳の表情モードの先頭位置(負値で最後尾から追加)
-        
+
         Returns
         -------
         None
@@ -894,7 +894,7 @@ class EyesControlClient:
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         data : r_dict
