@@ -92,8 +92,6 @@ class Eye:
 
         rlt = 0
 
-        self.change_mode(0)
-
         if mode_id >= self.numof_mode() or mode_id < 0:
             if type(img) is cv2.VideoCapture:
                 self.pupils_.append(img)
@@ -550,7 +548,7 @@ class EyesControlServer:
     def init_socket_(self, ip, port, timeout=10):
         self.server_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_.bind((ip, port))
-        #self.server_.settimeout(timeout)
+        self.server_.settimeout(timeout)
         self.server_.listen(2)
 
         self.payload_sz_ = struct.calcsize('>L')
@@ -562,12 +560,17 @@ class EyesControlServer:
     def on_host_waiting_(self):
         while True:
             print('Waiting a host...')
+
             try:
                 conn, addr = self.server_.accept()
                 print('Connected from {0}.'.format(addr))
                 th = threading.Thread(target=self.on_process_, args=[conn])
                 th.start()
                 th.join()
+
+                self.obj_left_.change_mode(0)
+                self.obj_right_.change_mode(0)
+                self.obj_eyelid_.set_interval(3, 2)
             except socket.timeout:
                 print('Connection timed out.')
 
@@ -582,13 +585,13 @@ class EyesControlServer:
 
     def receive_(self, conn):
         while len(self.data_) <= self.payload_sz_:
-            self.data_ += conn.recvfrom(127)[0]
+            self.data_ += conn.recv(127)
         packed_msg_sz = self.data_[:self.payload_sz_]
         self.data_ = self.data_[self.payload_sz_:]
         msg_sz = struct.unpack('>L', packed_msg_sz)[0]
 
         while len(self.data_) <= msg_sz:
-            self.data_ += conn.recvfrom(127)[0]
+            self.data_ += conn.recv(127)
 
         r_dict = pickle.loads(self.data_[:msg_sz], fix_imports=True, encoding='bytes')
         self.data_ = self.data_[msg_sz:]
