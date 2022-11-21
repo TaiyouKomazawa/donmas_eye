@@ -6,7 +6,6 @@
 author  : Taiyou Komazawa
 date    : 2022/11/21
 '''
-import typing
 
 import os.path, os
 

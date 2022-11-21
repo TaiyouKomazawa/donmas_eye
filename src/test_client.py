@@ -17,7 +17,7 @@ from libs.lib_donmas_eye import EyesControlClient
 
 #127.0.0.1はローカルループバック用のIPアドレス。
 #(LANを挟んだサーバーと通信する場合はサーバーのあるデバイスのIPアドレスを指定する。)
-IP = '127.0.0.1'
+IP = '192.168.0.34'
 #使用するネットワーク上のポート番号(donmas_eye_server.pyで指定したポート番号と同じものを指定する。)
 PORT = 35000
 

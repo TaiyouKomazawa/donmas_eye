@@ -14,7 +14,6 @@ import numpy as np
 
 import socket
 import struct
-import pickle
 
 from .lib_tcp_protocol import *
 from .donmas_eye_server_keys import HeaderKey as Key
