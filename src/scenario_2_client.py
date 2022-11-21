@@ -106,15 +106,15 @@ class Scenario2Server:
 
     def on_host_waiting_(self):
         while True:
-            print('Waiting a host...')
+            print('[s2c]Waiting a host...')
             try:
                 conn, addr = self.server_.accept()
-                print('Connected from {0}.'.format(addr))
+                print('[s2c]Connected from {0}.'.format(addr))
                 th = threading.Thread(target=self.on_process_, args=[conn])
                 th.start()
                 th.join()
             except socket.timeout:
-                print('Connection timed out.')
+                print('[s2c]Error : Connection timed out.')
 
             if self._is_alive_ == False:
                 break
