@@ -259,7 +259,7 @@ class EyesControlClient:
 
         r_dict = receive(self.client)
 
-        if len(r_dict.keys()) >= 3:
+        if len(r_dict.keys()) > 0:
             self.resp_packets_[Key().data_id] = r_dict[Key().data_id]
             self.resp_packets_[Key().mode_num] = r_dict[Key().mode_num]
             return r_dict
