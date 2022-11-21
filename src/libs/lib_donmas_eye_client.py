@@ -43,9 +43,9 @@ class EyesControlClient:
         self.data_ = b''
         self.payload_sz_ = struct.calcsize('>L')
 
-        self.resp_packet_ = {
+        self.resp_packets_ = {
             Key().data_id : 0,
-            Key().mode_num : 0,
+            Key().mode_num : 0
         }
 
         self.set_pos(0.5, 0.5)
@@ -241,7 +241,7 @@ class EyesControlClient:
 
         if sync:
             self.get_response()
-        return self.resp_packet_[Key().mode_num]
+        return self.resp_packets_[Key().mode_num]
 
     def get_response(self):
         '''
@@ -260,8 +260,8 @@ class EyesControlClient:
         r_dict = receive(self.client)
 
         if len(r_dict.keys()) >= 3:
-            self.resp_packet_[Key().data_id] = r_dict[Key().data_id]
-            self.resp_packet_[Key().mode_num] = r_dict[Key().mode_num]
+            self.resp_packets_[Key().data_id] = r_dict[Key().data_id]
+            self.resp_packets_[Key().mode_num] = r_dict[Key().mode_num]
             return r_dict
         else:
             return None

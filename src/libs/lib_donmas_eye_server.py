@@ -68,10 +68,9 @@ class EyesControlServer:
             Key().mode_id     : -1
         }
 
-        self.resp_packet_ = {
+        self.resp_packets_ = {
             Key().data_id : 0,
-            Key().mode_num : self.obj_right_.numof_mode(),
-            'len' : 0
+            Key().mode_num : self.obj_right_.numof_mode()
         }
 
         self.mutex_ = threading.Lock()
@@ -237,8 +236,8 @@ class EyesControlServer:
                     self.mutex_.acquire()
 
                     if Key().data_id in r_dict:
-                        self.resp_packet_[Key().data_id] = r_dict[Key().data_id]
-                        self.resp_packet_[Key().mode_num] = self.obj_right_.numof_mode()
+                        self.resp_packets_[Key().data_id] = r_dict[Key().data_id]
+                        self.resp_packets_[Key().mode_num] = self.obj_right_.numof_mode()
 
                     if Key().y_pos in r_dict and Key().x_pos in r_dict:
                         self.packets[Key().y_pos] = r_dict[Key().y_pos]
@@ -267,7 +266,7 @@ class EyesControlServer:
                         self.add_mode_(True)
 
                     self.mutex_.release()
-                    send(conn, self.resp_packet_)
+                    send(conn, self.resp_packets_)
                     print('Data received from {0}.\n  keys: {1}\n'.format(addr, r_dict.keys()))
             except ConnectionResetError:
                 print('[des]Disconnected from client({0}).'.format(addr))
