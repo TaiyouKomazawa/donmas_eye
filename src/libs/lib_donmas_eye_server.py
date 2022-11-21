@@ -209,7 +209,6 @@ class EyesControlServer:
         self.server_.listen(2)
 
         self.payload_sz_ = struct.calcsize('>L')
-        self.data_ = b''
 
         self.th_ = threading.Thread(target=self.on_host_waiting_)
         self.th_.setDaemon(True)
@@ -241,18 +240,25 @@ class EyesControlServer:
         result = conn.send(data)
         return result
 
-    def receive_(self, conn):
-        while len(self.data_) <= self.payload_sz_:
-            self.data_ += conn.recv(127)
-        packed_msg_sz = self.data_[:self.payload_sz_]
-        self.data_ = self.data_[self.payload_sz_:]
-        msg_sz = struct.unpack('>L', packed_msg_sz)[0]
+    def receive_(self, conn, max_buffer_sz=1024):
+        r_dict = {}
 
-        while len(self.data_) <= msg_sz:
-            self.data_ += conn.recv(127)
+        packed_msg_sz = conn.recv(self.payload_sz_)
 
-        r_dict = pickle.loads(self.data_[:msg_sz], fix_imports=True, encoding='bytes')
-        self.data_ = self.data_[msg_sz:]
+        if len(packed_msg_sz) >= 4:
+            msg_sz = struct.unpack('>L', packed_msg_sz)[0]
+
+            data = b''
+            if msg_sz <= max_buffer_sz:
+                data = conn.recv(msg_sz)
+            else:
+                buff_sz = msg_sz
+                while buff_sz > max_buffer_sz:
+                    data += conn.recv(max_buffer_sz)
+                    buff_sz -= max_buffer_sz
+                data += conn.recv(buff_sz)
+    
+            r_dict = pickle.loads(data[:msg_sz], fix_imports=True, encoding='bytes')
 
         return r_dict
 
