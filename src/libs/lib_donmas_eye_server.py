@@ -205,7 +205,7 @@ class EyesControlServer:
         self.server_.bind((ip, port))
         self.server_.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_.settimeout(timeout)
-        self.server_.listen(2)
+        self.server_.listen(3)
 
         self.th_ = threading.Thread(target=self.on_host_waiting_)
         self.th_.setDaemon(True)
@@ -213,24 +213,22 @@ class EyesControlServer:
 
     def on_host_waiting_(self):
         while self._is_alive_ != False:
-
-            print('Waiting a host...')
-
             try:
                 conn, addr = self.server_.accept()
-                print('Connected from {0}.'.format(addr))
-                th = threading.Thread(target=self.on_process_, args=[conn])
+                print('[des]Connected from {0}.'.format(addr))
+                th = threading.Thread(target=self.on_process_, args=[conn, addr])
                 th.setDaemon(True)
                 th.start()
-                th.join()
 
-                self.obj_left_.change_mode(0)
-                self.obj_right_.change_mode(0)
-                self.obj_eyelid_.set_interval(3, 2)
             except socket.timeout:
-                print('Error : Connection timed out.')
+                print('[des]Waiting a host...')
+            except KeyboardInterrupt:
+                break
 
-    def on_process_(self, conn):
+    def on_process_(self, conn, addr):
+        self.obj_left_.change_mode(0)
+        self.obj_right_.change_mode(0)
+
         while True:
             try:
                 r_dict = receive(conn)
@@ -270,9 +268,9 @@ class EyesControlServer:
 
                     self.mutex_.release()
                     send(conn, self.resp_packet_)
-                    print('Data received.\n  keys: {0}\n'.format(r_dict.keys()))
+                    print('Data received from {0}.\n  keys: {1}\n'.format(addr, r_dict.keys()))
             except ConnectionResetError:
-                print('Error : Disconnected from client.')
+                print('[des]Disconnected from client({0}).'.format(addr))
                 break
 
             if self._is_alive_ == False:

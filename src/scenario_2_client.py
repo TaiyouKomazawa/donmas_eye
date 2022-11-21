@@ -102,21 +102,21 @@ class Scenario2Server:
         self.server_.listen(2)
 
         self.th_ = threading.Thread(target=self.on_host_waiting_)
+        self.th_.setDaemon(True)
         self.th_.start()
 
     def on_host_waiting_(self):
-        while True:
-            print('[s2c]Waiting a host...')
+        while self._is_alive_ != False:
             try:
                 conn, addr = self.server_.accept()
                 print('[s2c]Connected from {0}.'.format(addr))
                 th = threading.Thread(target=self.on_process_, args=[conn])
+                th.setDaemon(True)
                 th.start()
-                th.join()
-            except socket.timeout:
-                print('[s2c]Error : Connection timed out.')
 
-            if self._is_alive_ == False:
+            except socket.timeout:
+                print('[s2c]Waiting a host...')
+            except KeyboardInterrupt:
                 break
 
     def on_process_(self, conn):
@@ -284,11 +284,11 @@ class Scenario2Server:
                 else:
                     continue
 
-                print('Data received!\n  data: {0}\n'.format(data))
+                print('[s2c]Data received!\n  data: {0}\n'.format(data))
             else:
                 break
 
-        print('Close connection.')
+        print('[s2c]Close connection.')
         conn.shutdown(socket.SHUT_RDWR)
         conn.close()
 
