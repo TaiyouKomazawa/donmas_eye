@@ -13,12 +13,11 @@ import os.path, os
 import cv2
 
 import socket
-import struct
-import pickle
 
 import threading
 
 from .lib_donmas_eye_base import *
+from .lib_tcp_protocol import *
 from .donmas_eye_server_keys import HeaderKey as Key
 
 #眼の動作を制御するサーバーの動作を定義するクラス
@@ -208,8 +207,6 @@ class EyesControlServer:
         self.server_.settimeout(timeout)
         self.server_.listen(2)
 
-        self.payload_sz_ = struct.calcsize('>L')
-
         self.th_ = threading.Thread(target=self.on_host_waiting_)
         self.th_.setDaemon(True)
         self.th_.start()
@@ -233,39 +230,10 @@ class EyesControlServer:
             except socket.timeout:
                 print('Error : Connection timed out.')
 
-
-    def send_(self, conn, packets):
-        serial_packets = pickle.dumps(packets, 0)
-        data = struct.pack('>L', len(serial_packets)) + serial_packets
-        result = conn.send(data)
-        return result
-
-    def receive_(self, conn, max_buffer_sz=1024):
-        r_dict = {}
-
-        packed_msg_sz = conn.recv(self.payload_sz_)
-
-        if len(packed_msg_sz) >= 4:
-            msg_sz = struct.unpack('>L', packed_msg_sz)[0]
-
-            data = b''
-            if msg_sz <= max_buffer_sz:
-                data = conn.recv(msg_sz)
-            else:
-                buff_sz = msg_sz
-                while buff_sz > max_buffer_sz:
-                    data += conn.recv(max_buffer_sz)
-                    buff_sz -= max_buffer_sz
-                data += conn.recv(buff_sz)
-    
-            r_dict = pickle.loads(data[:msg_sz], fix_imports=True, encoding='bytes')
-
-        return r_dict
-
     def on_process_(self, conn):
         while True:
             try:
-                r_dict = self.receive_(conn)
+                r_dict = receive(conn)
 
                 if len(r_dict.keys()) != 0:
                     self.mutex_.acquire()
@@ -301,7 +269,7 @@ class EyesControlServer:
                         self.add_mode_(True)
 
                     self.mutex_.release()
-                    self.send_(conn, self.resp_packet_)
+                    send(conn, self.resp_packet_)
                     print('Data received.\n  keys: {0}\n'.format(r_dict.keys()))
             except ConnectionResetError:
                 print('Error : Disconnected from client.')

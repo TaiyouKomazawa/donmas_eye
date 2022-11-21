@@ -16,6 +16,7 @@ import socket
 import struct
 import pickle
 
+from .lib_tcp_protocol import *
 from .donmas_eye_server_keys import HeaderKey as Key
 
 #眼の動作を制御するサーバーのクライアント側で実行できる動作を定義するクラス
@@ -256,7 +257,7 @@ class EyesControlClient:
             サーバーからのレスポンス
         '''
 
-        r_dict = self.receive_(self.client)
+        r_dict = receive(self.client)
 
         if len(r_dict.keys()) >= 3:
             self.resp_packet_[Key().data_id] = r_dict[Key().data_id]
@@ -267,31 +268,7 @@ class EyesControlClient:
 
     def send_(self, packets):
         packets[Key().data_id] = self.data_id_
-        serial_packets = pickle.dumps(packets, 0)
-        data = struct.pack('>L', len(serial_packets)) + serial_packets
-        result = self.client.send(data)
+        result = send(self.client, packets)
         time.sleep(0.01)
         self.data_id_ += 1
         return result
-
-    def receive_(self, conn, max_buffer_sz=1024):
-        r_dict = {}
-
-        packed_msg_sz = conn.recv(self.payload_sz_)
-
-        if len(packed_msg_sz) >= 4:
-            msg_sz = struct.unpack('>L', packed_msg_sz)[0]
-
-            data = b''
-            if msg_sz <= max_buffer_sz:
-                data = conn.recv(msg_sz)
-            else:
-                buff_sz = msg_sz
-                while buff_sz > max_buffer_sz:
-                    data += conn.recv(max_buffer_sz)
-                    buff_sz -= max_buffer_sz
-                data += conn.recv(buff_sz)
-
-            r_dict = pickle.loads(data[:msg_sz], fix_imports=True, encoding='bytes')
-
-        return r_dict
