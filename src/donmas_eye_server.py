@@ -85,7 +85,6 @@ def main():
             print("The 'q' key has been pressed and the main loop has ended.")
             break
 
-    eyes_ctrl_server.kill_process()
 
 if __name__ == '__main__':
     main()

@@ -93,7 +93,7 @@ class EyesControlServer:
         クラスデストラクタ
         '''
 
-        self.kill_process()
+        self.close()
 
     def get_image(self):
         '''
@@ -117,9 +117,9 @@ class EyesControlServer:
 
         return dst
 
-    def kill_process(self):
+    def close(self):
         '''
-        通信プロセスをキルします。
+        通信プロセスを終了します。
 
         Parameters
         ----------
@@ -204,6 +204,7 @@ class EyesControlServer:
     def init_socket_(self, ip, port, timeout=10):
         self.server_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_.bind((ip, port))
+        self.server_.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_.settimeout(timeout)
         self.server_.listen(2)
 
@@ -211,16 +212,19 @@ class EyesControlServer:
         self.data_ = b''
 
         self.th_ = threading.Thread(target=self.on_host_waiting_)
+        self.th_.setDaemon(True)
         self.th_.start()
 
     def on_host_waiting_(self):
-        while True:
+        while self._is_alive_ != False:
+
             print('Waiting a host...')
 
             try:
                 conn, addr = self.server_.accept()
                 print('Connected from {0}.'.format(addr))
                 th = threading.Thread(target=self.on_process_, args=[conn])
+                th.setDaemon(True)
                 th.start()
                 th.join()
 
@@ -230,8 +234,6 @@ class EyesControlServer:
             except socket.timeout:
                 print('Error : Connection timed out.')
 
-            if self._is_alive_ == False:
-                break
 
     def send_(self, conn, packets):
         serial_packets = pickle.dumps(packets, 0)
@@ -256,47 +258,52 @@ class EyesControlServer:
 
     def on_process_(self, conn):
         while True:
-            r_dict = self.receive_(conn)
+            try:
+                r_dict = self.receive_(conn)
 
-            if len(r_dict.keys()) != 0:
-                self.mutex_.acquire()
+                if len(r_dict.keys()) != 0:
+                    self.mutex_.acquire()
 
-                if Key().data_id in r_dict:
-                    self.resp_packet_[Key().data_id] = r_dict[Key().data_id]
-                    self.resp_packet_[Key().mode_num] = self.obj_right_.numof_mode()
+                    if Key().data_id in r_dict:
+                        self.resp_packet_[Key().data_id] = r_dict[Key().data_id]
+                        self.resp_packet_[Key().mode_num] = self.obj_right_.numof_mode()
 
-                if Key().y_pos in r_dict and Key().x_pos in r_dict:
-                    self.packets[Key().y_pos] = r_dict[Key().y_pos]
-                    self.packets[Key().x_pos] = r_dict[Key().x_pos]
-                    self.set_pos_()
+                    if Key().y_pos in r_dict and Key().x_pos in r_dict:
+                        self.packets[Key().y_pos] = r_dict[Key().y_pos]
+                        self.packets[Key().x_pos] = r_dict[Key().x_pos]
+                        self.set_pos_()
 
-                if Key().blink_period in r_dict and Key().blink_num in r_dict:
-                    self.packets[Key().blink_period] = r_dict[Key().blink_period]
-                    self.packets[Key().blink_num] = r_dict[Key().blink_num]
-                    self.set_interval_()
+                    if Key().blink_period in r_dict and Key().blink_num in r_dict:
+                        self.packets[Key().blink_period] = r_dict[Key().blink_period]
+                        self.packets[Key().blink_num] = r_dict[Key().blink_num]
+                        self.set_interval_()
 
-                if Key().right_mode in r_dict and Key().left_mode in r_dict:
-                    self.packets[Key().right_mode] = r_dict[Key().right_mode]
-                    self.packets[Key().left_mode] = r_dict[Key().left_mode]
-                    self.set_mode_()
+                    if Key().right_mode in r_dict and Key().left_mode in r_dict:
+                        self.packets[Key().right_mode] = r_dict[Key().right_mode]
+                        self.packets[Key().left_mode] = r_dict[Key().left_mode]
+                        self.set_mode_()
 
-                if Key().right_mode_img in r_dict and Key().left_mode_img in r_dict:
-                    self.packets[Key().right_mode_img] = r_dict[Key().right_mode_img]
-                    self.packets[Key().left_mode_img] = r_dict[Key().left_mode_img]
-                    self.packets[Key().mode_id] = r_dict[Key().mode_id]
-                    self.add_mode_(False)
+                    if Key().right_mode_img in r_dict and Key().left_mode_img in r_dict:
+                        self.packets[Key().right_mode_img] = r_dict[Key().right_mode_img]
+                        self.packets[Key().left_mode_img] = r_dict[Key().left_mode_img]
+                        self.packets[Key().mode_id] = r_dict[Key().mode_id]
+                        self.add_mode_(False)
 
-                elif Key().rl_mode_img in r_dict:
-                    self.packets[Key().rl_mode_img] = r_dict[Key().rl_mode_img]
-                    self.packets[Key().mode_id] = r_dict[Key().mode_id]
-                    self.add_mode_(True)
+                    if Key().rl_mode_img in r_dict:
+                        self.packets[Key().rl_mode_img] = r_dict[Key().rl_mode_img]
+                        self.packets[Key().mode_id] = r_dict[Key().mode_id]
+                        self.add_mode_(True)
 
-                self.mutex_.release()
-                self.send_(conn, self.resp_packet_)
-                print('Data received.\n  keys: {0}\n'.format(r_dict.keys()))
+                    self.mutex_.release()
+                    self.send_(conn, self.resp_packet_)
+                    print('Data received.\n  keys: {0}\n'.format(r_dict.keys()))
+            except ConnectionResetError:
+                print('Error : Disconnected from client.')
+                break
 
             if self._is_alive_ == False:
                 break
 
         print('Close connection.')
+        conn.shutdown(socket.SHUT_RDWR)
         conn.close()

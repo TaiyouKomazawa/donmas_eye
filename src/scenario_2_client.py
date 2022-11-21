@@ -99,6 +99,7 @@ class Scenario2Server:
     def init_socket_(self, ip, port, timeout=10):
         self.server_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_.bind((ip, port))
+        self.server_.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_.settimeout(timeout)
         self.server_.listen(2)
 
@@ -290,6 +291,7 @@ class Scenario2Server:
                 break
 
         print('Close connection.')
+        conn.shutdown(socket.SHUT_RDWR)
         conn.close()
 
 ss = Scenario2Server(

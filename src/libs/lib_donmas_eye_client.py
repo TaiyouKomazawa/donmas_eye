@@ -53,7 +53,7 @@ class EyesControlClient:
         '''
         クラスデストラクタ
         '''
-
+        self.client.shutdown(socket.SHUT_RDWR)
         self.client.close()
 
     def set_pos(self, x, y):
