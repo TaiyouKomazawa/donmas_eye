@@ -22,10 +22,8 @@ TARGET_PORT = int(args[2])
 print("Server IP:", TARGET_IP)
 print("Server PORT:", TARGET_PORT)
 
-#ライブラリからEyesControlClientクラスを読み込む
-from libs.lib_donmas_eye import EyesControlClient
-
-from libs.lib_curves import Proportion
+#ライブラリからEyesControlClientクラスとProportionクラスを読み込む
+from libs.lib_donmas_eye import EyesControlClient, Proportion
 
 #127.0.0.1はデバイス内のシナリオサーバからデータを受け取るためのローカルループバック用のIPアドレス。
 #SCENARIO_SERVER_IP = '192.168.0.34'

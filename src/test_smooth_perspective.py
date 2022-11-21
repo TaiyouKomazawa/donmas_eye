@@ -9,10 +9,8 @@ date    : 2022/4/23
 
 import time
 
-#ライブラリからEyesControlClientクラスを読み込む
-from libs.lib_donmas_eye import EyesControlClient
-#ライブラリからPow3クラスを読み込む
-from libs.lib_curves import Pow3
+#ライブラリからEyesControlClientクラスとPow3クラスを読み込む
+from libs.lib_donmas_eye import EyesControlClient, Pow3
 
 #127.0.0.1はローカルループバック用のIPアドレス。
 #(LANを挟んだサーバーと通信する場合はサーバーのあるデバイスのIPアドレスを指定する。)
