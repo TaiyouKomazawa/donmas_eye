@@ -182,7 +182,7 @@ class EyesControlServer:
             else:
                 result |= self.obj_left_.add_mode(cv2.imread(lfpath, cv2.IMREAD_COLOR), mode_id)
         if result:
-            print('Add mode!!')
+            print('Add mode done!')
 
     def set_pos_(self):
         y = self.packets[Key().y_pos]
@@ -228,7 +228,7 @@ class EyesControlServer:
                 self.obj_right_.change_mode(0)
                 self.obj_eyelid_.set_interval(3, 2)
             except socket.timeout:
-                print('Connection timed out.')
+                print('Error : Connection timed out.')
 
             if self._is_alive_ == False:
                 break
@@ -293,7 +293,7 @@ class EyesControlServer:
 
                 self.mutex_.release()
                 self.send_(conn, self.resp_packet_)
-                print('Data received!\n  keys: {0}\n'.format(r_dict.keys()))
+                print('Data received.\n  keys: {0}\n'.format(r_dict.keys()))
 
             if self._is_alive_ == False:
                 break
