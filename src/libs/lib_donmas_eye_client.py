@@ -16,6 +16,7 @@ import socket
 import struct
 import pickle
 
+from .donmas_eye_server_keys import HeaderKey as Key
 
 #眼の動作を制御するサーバーのクライアント側で実行できる動作を定義するクラス
 class EyesControlClient:
@@ -36,34 +37,14 @@ class EyesControlClient:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((ip, port))
 
-        self.data_id_key_       = 'id'
-
-        self.x_pos_key_         = 'xpos'
-        self.y_pos_key_         = 'ypos'
-        self.blink_period_key_  = 'period'
-        self.blink_num_key_     = 'bnum'
-        self.right_mode_key_    = 'rmode'
-        self.left_mode_key_     = 'lmode'
-
-        self.right_mode_img_key_    = 'rmodeimg'
-        self.left_mode_img_key_     = 'lmodeimg'
-        self.rl_mode_img_key_       = 'rlmodeimg'
-        self.mode_id_key_           = 'mode-id'
-
-        self.mode_num_key_      = 'mode-num'
-
-        self.mode_fname_key_    = 'fname'
-        self.mode_bin_key_      = 'bin'
-
         self.data_id_ = 0
 
         self.data_ = b''
         self.payload_sz_ = struct.calcsize('>L')
 
         self.resp_packet_ = {
-            self.data_id_key_ : 0,
-            self.mode_num_key_ : 0,
-            'len' : 0
+            Key().data_id : 0,
+            Key().mode_num : 0,
         }
 
         self.set_pos(0.5, 0.5)
@@ -94,8 +75,8 @@ class EyesControlClient:
         '''
 
         packets = {
-            self.x_pos_key_ : x,
-            self.y_pos_key_ : y
+            Key().x_pos : x,
+            Key().y_pos : y
         }
 
         return self.send_(packets)
@@ -119,8 +100,8 @@ class EyesControlClient:
         '''
 
         packets = {
-            self.blink_period_key_  : period,
-            self.blink_num_key_     : loop_num
+            Key().blink_period  : period,
+            Key().blink_num     : loop_num
         }
 
         return self.send_(packets)
@@ -144,8 +125,8 @@ class EyesControlClient:
         '''
 
         packets = {
-            self.right_mode_key_    : r_mode_id,
-            self.left_mode_key_     : l_mode_id
+            Key().right_mode    : r_mode_id,
+            Key().left_mode     : l_mode_id
         }
 
         return self.send_(packets)
@@ -177,12 +158,12 @@ class EyesControlClient:
             f = open(right_path, 'rb')
 
             f_data = {
-                self.mode_fname_key_    : f_name,
-                self.mode_bin_key_      : f.read(),
+                Key().mode_fname    : f_name,
+                Key().mode_bin      : f.read(),
             }
             packets = {
-                self.rl_mode_img_key_   : f_data,
-                self.mode_id_key_       : mode_id
+                Key().rl_mode_img   : f_data,
+                Key().mode_id       : mode_id
             }
 
             f.close()
@@ -194,17 +175,17 @@ class EyesControlClient:
             lf = open(left_path, 'rb')
 
             rf_data = {
-                self.mode_fname_key_    : rf_name,
-                self.mode_bin_key_      : rf.read(),
+                Key().mode_fname    : rf_name,
+                Key().mode_bin      : rf.read(),
             }
             lf_data = {
-                self.mode_fname_key_    : lf_name,
-                self.mode_bin_key_      : lf.read(),
+                Key().mode_fname    : lf_name,
+                Key().mode_bin      : lf.read(),
             }
             packets = {
-                self.right_mode_img_key_: rf_data,
-                self.left_mode_img_key_ : lf_data,
-                self.mode_id_key_       : mode_id
+                Key().right_mode_img: rf_data,
+                Key().left_mode_img : lf_data,
+                Key().mode_id       : mode_id
             }
 
             rf.close()
@@ -259,7 +240,7 @@ class EyesControlClient:
 
         if sync:
             self.get_response()
-        return self.resp_packet_[self.mode_num_key_]
+        return self.resp_packet_[Key().mode_num]
 
     def get_response(self):
         '''
@@ -278,15 +259,14 @@ class EyesControlClient:
         r_dict = self.receive_()
 
         if len(r_dict.keys()) >= 3:
-            self.resp_packet_[self.data_id_key_] = r_dict[self.data_id_key_]
-            self.resp_packet_[self.mode_num_key_] = r_dict[self.mode_num_key_]
-            self.resp_packet_['len'] = r_dict['len']
+            self.resp_packet_[Key().data_id] = r_dict[Key().data_id]
+            self.resp_packet_[Key().mode_num] = r_dict[Key().mode_num]
             return r_dict
         else:
             return None
 
     def send_(self, packets):
-        packets[self.data_id_key_] = self.data_id_
+        packets[Key().data_id] = self.data_id_
         serial_packets = pickle.dumps(packets, 0)
         data = struct.pack('>L', len(serial_packets)) + serial_packets
         result = self.client.send(data)

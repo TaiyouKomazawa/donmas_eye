@@ -19,6 +19,7 @@ import pickle
 import threading
 
 from .lib_donmas_eye_base import *
+from .donmas_eye_server_keys import HeaderKey as Key
 
 #眼の動作を制御するサーバーの動作を定義するクラス
 class EyesControlServer:
@@ -53,43 +54,24 @@ class EyesControlServer:
         self.obj_left_ = obj_left
         self.obj_eyelid_ = obj_eyelid
 
-        self.data_id_key_ = 'id'
-
-        self.x_pos_key_         = 'xpos'
-        self.y_pos_key_         = 'ypos'
-        self.blink_period_key_  = 'period'
-        self.blink_num_key_     = 'bnum'
-        self.right_mode_key_    = 'rmode'
-        self.left_mode_key_     = 'lmode'
-
-        self.right_mode_img_key_    = 'rmodeimg'
-        self.left_mode_img_key_     = 'lmodeimg'
-        self.rl_mode_img_key_       = 'rlmodeimg'
-        self.mode_id_key_           = 'mode-id'
-
-        self.mode_num_key_      = 'mode-num'
-
-        self.mode_fname_key_    = 'fname'
-        self.mode_bin_key_      = 'bin'
-
         self.packets = {
-            self.data_id_key_ : 0,
-            self.x_pos_key_ : 0.5,
-            self.y_pos_key_ : 0.5,
-            self.blink_period_key_ : 3,
-            self.blink_num_key_ : 2,
-            self.right_mode_key_ : 0,
-            self.left_mode_key_ : 0,
+            Key().data_id : 0,
+            Key().x_pos : 0.5,
+            Key().y_pos : 0.5,
+            Key().blink_period : 3,
+            Key().blink_num : 2,
+            Key().right_mode : 0,
+            Key().left_mode : 0,
 
-            self.right_mode_img_key_ : '',
-            self.left_mode_img_key_ : '',
-            self.rl_mode_img_key_ : '',
-            self.mode_id_key_     : -1
+            Key().right_mode_img : '',
+            Key().left_mode_img : '',
+            Key().rl_mode_img : '',
+            Key().mode_id     : -1
         }
 
         self.resp_packet_ = {
-            self.data_id_key_ : 0,
-            self.mode_num_key_ : self.obj_right_.numof_mode(),
+            Key().data_id : 0,
+            Key().mode_num : self.obj_right_.numof_mode(),
             'len' : 0
         }
 
@@ -157,13 +139,13 @@ class EyesControlServer:
         result = False
 
         if is_single_img:
-            f_bin = self.packets[self.rl_mode_img_key_]
-            mode_id = self.packets[self.mode_id_key_]
+            f_bin = self.packets[Key().rl_mode_img]
+            mode_id = self.packets[Key().mode_id]
 
-            fpath = 'tmp_img/'+f_bin[self.mode_fname_key_]
+            fpath = 'tmp_img/'+f_bin[Key().mode_fname]
 
             f = open(fpath, 'wb')
-            f.write(f_bin[self.mode_bin_key_])
+            f.write(f_bin[Key().mode_bin])
             f.close()
 
             _, ext = os.path.splitext(fpath)
@@ -174,17 +156,17 @@ class EyesControlServer:
                 result |= self.obj_right_.add_mode(cv2.imread(fpath, cv2.IMREAD_COLOR), mode_id)
                 result |= self.obj_left_.add_mode(cv2.imread(fpath, cv2.IMREAD_COLOR), mode_id)
         else:
-            rf_bin = self.packets[self.right_mode_img_key_]
-            lf_bin = self.packets[self.left_mode_img_key_]
-            mode_id = self.packets[self.mode_id_key_]
+            rf_bin = self.packets[Key().right_mode_img]
+            lf_bin = self.packets[Key().left_mode_img]
+            mode_id = self.packets[Key().mode_id]
 
-            rfpath = 'tmp_img/'+rf_bin[self.mode_fname_key_]
-            lfpath = 'tmp_img/'+lf_bin[self.mode_fname_key_]
+            rfpath = 'tmp_img/'+rf_bin[Key().mode_fname]
+            lfpath = 'tmp_img/'+lf_bin[Key().mode_fname]
 
             rf = open(rfpath, 'wb')
             lf = open(lfpath, 'wb')
-            rf.write(rf_bin[self.mode_bin_key_])
-            lf.write(lf_bin[self.mode_bin_key_])
+            rf.write(rf_bin[Key().mode_bin])
+            lf.write(lf_bin[Key().mode_bin])
             rf.close()
             lf.close()
 
@@ -203,19 +185,19 @@ class EyesControlServer:
             print('Add mode!!')
 
     def set_pos_(self):
-        y = self.packets[self.y_pos_key_]
-        x = self.packets[self.x_pos_key_]
+        y = self.packets[Key().y_pos]
+        x = self.packets[Key().x_pos]
         self.obj_right_.set_pos(y, x)
         self.obj_left_.set_pos(y, x)
 
     def set_interval_(self):
-        interval = self.packets[self.blink_period_key_]
-        num = self.packets[self.blink_num_key_]
+        interval = self.packets[Key().blink_period]
+        num = self.packets[Key().blink_num]
         self.obj_eyelid_.set_interval(interval, num)
 
     def set_mode_(self):
-        rmode = self.packets[self.right_mode_key_]
-        lmode = self.packets[self.left_mode_key_]
+        rmode = self.packets[Key().right_mode]
+        lmode = self.packets[Key().left_mode]
         self.obj_right_.change_mode(rmode)
         self.obj_left_.change_mode(lmode)
 
@@ -279,35 +261,34 @@ class EyesControlServer:
             if len(r_dict.keys()) != 0:
                 self.mutex_.acquire()
 
-                if self.data_id_key_ in r_dict:
-                    self.resp_packet_[self.data_id_key_] = r_dict[self.data_id_key_]
-                    self.resp_packet_[self.mode_num_key_] = self.obj_right_.numof_mode()
-                    self.resp_packet_['len'] = len(self.data_)
+                if Key().data_id in r_dict:
+                    self.resp_packet_[Key().data_id] = r_dict[Key().data_id]
+                    self.resp_packet_[Key().mode_num] = self.obj_right_.numof_mode()
 
-                if self.y_pos_key_ in r_dict and self.x_pos_key_ in r_dict:
-                    self.packets[self.y_pos_key_] = r_dict[self.y_pos_key_]
-                    self.packets[self.x_pos_key_] = r_dict[self.x_pos_key_]
+                if Key().y_pos in r_dict and Key().x_pos in r_dict:
+                    self.packets[Key().y_pos] = r_dict[Key().y_pos]
+                    self.packets[Key().x_pos] = r_dict[Key().x_pos]
                     self.set_pos_()
 
-                if self.blink_period_key_ in r_dict and self.blink_num_key_ in r_dict:
-                    self.packets[self.blink_period_key_] = r_dict[self.blink_period_key_]
-                    self.packets[self.blink_num_key_] = r_dict[self.blink_num_key_]
+                if Key().blink_period in r_dict and Key().blink_num in r_dict:
+                    self.packets[Key().blink_period] = r_dict[Key().blink_period]
+                    self.packets[Key().blink_num] = r_dict[Key().blink_num]
                     self.set_interval_()
 
-                if self.right_mode_key_ in r_dict and self.left_mode_key_ in r_dict:
-                    self.packets[self.right_mode_key_] = r_dict[self.right_mode_key_]
-                    self.packets[self.left_mode_key_] = r_dict[self.left_mode_key_]
+                if Key().right_mode in r_dict and Key().left_mode in r_dict:
+                    self.packets[Key().right_mode] = r_dict[Key().right_mode]
+                    self.packets[Key().left_mode] = r_dict[Key().left_mode]
                     self.set_mode_()
 
-                if self.right_mode_img_key_ in r_dict and self.left_mode_img_key_ in r_dict:
-                    self.packets[self.right_mode_img_key_] = r_dict[self.right_mode_img_key_]
-                    self.packets[self.left_mode_img_key_] = r_dict[self.left_mode_img_key_]
-                    self.packets[self.mode_id_key_] = r_dict[self.mode_id_key_]
+                if Key().right_mode_img in r_dict and Key().left_mode_img in r_dict:
+                    self.packets[Key().right_mode_img] = r_dict[Key().right_mode_img]
+                    self.packets[Key().left_mode_img] = r_dict[Key().left_mode_img]
+                    self.packets[Key().mode_id] = r_dict[Key().mode_id]
                     self.add_mode_(False)
 
-                elif self.rl_mode_img_key_ in r_dict:
-                    self.packets[self.rl_mode_img_key_] = r_dict[self.rl_mode_img_key_]
-                    self.packets[self.mode_id_key_] = r_dict[self.mode_id_key_]
+                elif Key().rl_mode_img in r_dict:
+                    self.packets[Key().rl_mode_img] = r_dict[Key().rl_mode_img]
+                    self.packets[Key().mode_id] = r_dict[Key().mode_id]
                     self.add_mode_(True)
 
                 self.mutex_.release()
