@@ -84,6 +84,7 @@ def main():
             cv2.destroyAllWindows()
             print("The 'q' key has been pressed and the main loop has ended.")
             break
+    eyes_ctrl_server.close()
 
 
 if __name__ == '__main__':

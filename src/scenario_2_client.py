@@ -89,7 +89,7 @@ class Scenario2Server:
 
         return (xrlt and yrlt)
 
-    def kill_process(self):
+    def close(self):
         self._is_alive_ = False
         self.server_.close()
         self.th_.join()
