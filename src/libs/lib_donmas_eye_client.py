@@ -47,8 +47,6 @@ class EyesControlClient:
             Key().mode_num : 0
         }
 
-        self.set_pos(0.5, 0.5)
-
     def __del__(self):
         '''
         クラスデストラクタ
