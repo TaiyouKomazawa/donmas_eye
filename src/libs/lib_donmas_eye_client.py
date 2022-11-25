@@ -43,7 +43,7 @@ class EyesControlClient:
         self.payload_sz_ = struct.calcsize('>L')
 
         self.resp_packets_ = {
-            Key().data_id : 0,
+            Key().data_id : -1,
             Key().mode_num : 0
         }
 
@@ -237,7 +237,7 @@ class EyesControlClient:
         '''
 
         if sync:
-            self.get_response()
+            self.update_response_()
         return self.resp_packets_[Key().mode_num]
 
     def get_response(self):
@@ -250,22 +250,23 @@ class EyesControlClient:
 
         Returns
         -------
-        data : r_dict
+        data : dict
             サーバーからのレスポンス
+            data-id     : 受信された最新のデータID
+            mode-num    : サーバーに登録されている瞳モードの数
         '''
 
-        r_dict = receive(self.client)
+        return self.resp_packets_
 
+    def update_response_(self):
+        r_dict = receive(self.client)
         if len(r_dict.keys()) > 0:
             self.resp_packets_[Key().data_id] = r_dict[Key().data_id]
             self.resp_packets_[Key().mode_num] = r_dict[Key().mode_num]
-            return r_dict
-        else:
-            return None
 
     def send_(self, packets):
         packets[Key().data_id] = self.data_id_
         result = send(self.client, packets)
-        time.sleep(0.01)
+        self.update_response_()
         self.data_id_ += 1
         return result
